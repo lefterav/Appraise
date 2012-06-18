@@ -1,0 +1,226 @@
+#!/bin/bash
+
+progname=`basename $0`
+basedir=`dirname $0`
+bindir=${basedir}/bin
+export PYTHONPATH=$basedir:$PYTHONPATH
+export DJANGO_SETTINGS_MODULE=settings
+
+################################################################################
+# Utility functions
+
+function error() {
+    echo -e "Error: $*" 1>&2
+    exit 1
+}
+
+function setCampaignArg() {
+    if [[ -z $ESMT_CAMPAIGN ]]; then
+	error "ESMT_CAMPAIGN not set!\n(If you truly want to work with no campaign, set it to 'none')"
+    elif [[ $ESMT_CAMPAIGN != none ]]; then
+	campaignArg="--campaign $ESMT_CAMPAIGN"
+    else
+	campaignArg=""
+    fi
+}
+	
+
+function inArray() {
+    local searchFor=$1
+    local array=$2
+    local arrayExpr
+    local elem
+    local i=0
+    while true; do
+	arrayExpr="$array[$i]"
+	elem=${!arrayExpr}
+	[[ $elem == EOL ]] && return 1
+	[[ $elem == $searchFor ]] && return 0
+	((++i))
+    done
+}
+
+function arrayDescription() {
+    local arrayName=$1
+    local arrayDesc=$2
+    local i=0
+    local arrayExpr
+    while true; do
+	arrayExpr="$arrayName[$i]"
+	local name=${!arrayExpr}
+	[[ $name == EOL ]] && break
+	arrayExpr="$arrayDesc[$i]"
+	local desc=${!arrayExpr}
+	printf "   %-11s%s\n" $name "$desc"
+	((++i))
+    done
+}
+
+function assocArray() {
+    local searchFor=$1
+    local arrayName=$2
+    local arrayValues=$3
+    local i=0
+    local arrayExpr
+    while true; do
+	arrayExpr="$arrayName[$i]"
+	local name=${!arrayExpr}
+	[[ $name == EOL ]] && return 1
+	if [[ $name == $searchFor ]]; then
+	    arrayExpr="$arrayValues[$i]"
+	    echo ${!arrayExpr}
+	    return 0
+	fi
+	((++i))
+    done
+}
+
+################################################################################
+# Add* functions
+
+addFuncNames=("language" "document" "corpus" "translation" "campaign" "system" "EOL")
+addHelp=(
+         "add a language to the database"
+	 "add a document to the database"
+	 "add a corpus to the database"
+	 "add a translation to the database"
+	 "add an evaluation campaign to the database"
+	 "add a system to the database"
+	)
+addCommands=("addLanguage.py"
+	"addSourceDocument.py"
+	"addCorpus.py"
+	"addTranslation.py"
+	"addEvaluationCampaign.py"
+	"addSystem.py"
+	)
+addNeedsCampaign=(false true true true false false)
+
+function add() {
+    needsCampaign=`assocArray $1 addFuncNames addNeedsCampaign`
+    command=`assocArray $1 addFuncNames addCommands`
+    if [[ $? != 0 ]]; then
+	error "option '$1' not supported for 'add'"
+    else
+	shift
+	campaignArg=""
+	if $needsCampaign; then
+	    setCampaignArg
+	fi
+	ESMT_PROG_NAME="$progname add $1" $bindir/$command $campaignArg "$@"
+    fi
+}
+
+function add_help() {
+    if [[ $# == 0 ]]; then
+	echo "Supported elements to add:"
+	echo
+	arrayDescription addFuncNames addHelp
+    else
+	command=`assocArray $1 addFuncNames addCommands`
+	if [[ $? != 0 ]]; then
+	    error "option '$1' not supported for 'add'"
+	else
+	    ESMT_PROG_NAME="$progname add $1" $bindir/$command --help
+	fi
+    fi
+}
+
+################################################################################
+# Dump* functions
+
+dumpFuncNames=("document" "corpus" "EOL")
+dumpHelp=(
+	 "dump a document from the database"
+	 "dump a corpus from the database"
+	)
+dumpCommands=("dumpDocument.py"
+	"dumpCorpus.py"
+	)
+
+function dump() {
+    command=`assocArray $1 dumpFuncNames dumpCommands`
+    if [[ $? != 0 ]]; then
+	error "option '$1' not supported for 'dump'"
+    else
+	shift
+	ESMT_PROG_NAME="$progname dump $1" $bindir/$command "$@"
+    fi
+}
+
+function dump_help() {
+    if [[ $# == 0 ]]; then
+	echo "Supported elements to dump:"
+	echo
+	arrayDescription dumpFuncNames dumpHelp
+    else
+	command=`assocArray $1 dumpFuncNames dumpCommands`
+	if [[ $? != 0 ]]; then
+	    error "option '$1' not supported for 'dump'"
+	else
+	    ESMT_PROG_NAME="$progname dump $1" $bindir/$command --help
+	fi
+    fi
+}
+
+################################################################################
+# Start the server
+function start() {
+    python2 $basedir/manage.py runserver
+}
+
+################################################################################
+
+function help() {
+    if [[ $# == 0 ]]; then
+	cat <<EOF
+usage: $progname <command> [options]
+
+Supported commands:
+EOF
+	arrayDescription supportedCommands helpForCommands
+
+cat <<EOF
+
+Use '$progname help <command>' for showing help for a specific command
+EOF
+    else
+	command=$1
+	shift
+	${command}_help "$@"
+    fi
+}
+
+supportedCommands=("add" "dump" "start" "help" "EOL")
+helpForCommands=(
+                 "adds elements to the database"
+		 "dumps elements of the database"
+		 "starts the evaluation server"
+		 "shows this help"
+		)
+
+################################################################################
+# Main function
+function main() {
+    if [[ $# == 0 ]]; then
+	help
+    elif inArray $1 supportedCommands; then
+	command=$1
+	shift
+	$command "$@"
+    else
+	cat 1>&2 <<EOF
+Unsupported command: $1
+
+Use '$progname help' for a list of supported commands
+EOF
+	return 1
+    fi
+}
+
+################################################################################
+main "$@"
+
+# Local Variables
+# mode: shell
+# End:

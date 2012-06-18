@@ -1,3 +1,7 @@
 *.pyc
 *.db
-.DS_Store
+.DS_Storedb
+.history
+.*.swp
+*~
+test/
