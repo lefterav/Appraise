@@ -20,6 +20,8 @@ from django.template.loader import get_template
 from appraise.settings import LOG_LEVEL, LOG_HANDLER
 from appraise.utils import datetime_to_seconds
 
+import corpus.models as corpus
+
 # Setup logging support.
 logging.basicConfig(level=LOG_LEVEL)
 LOGGER = logging.getLogger('appraise.evaluation.models')
@@ -96,12 +98,14 @@ class EvaluationTask(models.Model):
       verbose_name="Task type"
     )
 
-    task_xml = models.FileField(
-      upload_to='source-xml',
-      help_text="XML source file for this evaluation task.",
-      validators=[validate_source_xml_file],
-      verbose_name="Task XML source"
-    )
+    task_xml = models.TextField()
+    #task_xml = models.FileField(
+    #  upload_to='source-xml',
+    #  help_text="XML source file for this evaluation task.",
+    #  #validators=[validate_source_xml_file],
+    #  verbose_name="Task XML source",
+    #  blank=True
+    #)
 
     # This is derived from task_xml and NOT stored in the database.
     task_attributes = {}
@@ -119,6 +123,10 @@ class EvaluationTask(models.Model):
       null=True,
       help_text="(Optional) Users allowed to work on this evaluation task."
     )
+
+    systems = models.ManyToManyField(corpus.TranslationSystem)
+
+    language = models.ForeignKey(corpus.Language)
 
     active = models.BooleanField(
       db_index=True,
@@ -179,9 +187,10 @@ class EvaluationTask(models.Model):
             # We have to call save() here to get an id for this task.
             super(EvaluationTask, self).save(*args, **kwargs)
             
-            self.task_xml.open()
-            _tree = fromstring(self.task_xml.read())
-            self.task_xml.close()
+            #self.task_xml.open()
+            #_tree = fromstring(self.task_xml.read())
+            #self.task_xml.close()
+            _tree = []
             
             for _child in _tree:
                 new_item = EvaluationItem(task=self,
@@ -387,9 +396,11 @@ class EvaluationItem(models.Model):
     
     item_xml = models.TextField(
       help_text="XML source for this evaluation item.",
-      validators=[validate_item_xml],
+      #validators=[validate_item_xml],
       verbose_name="Translations XML source"
     )
+
+    item_sourceSentence = models.ForeignKey(corpus.SourceSentence)
     
     # These fields are derived from item_xml and NOT stored in the database.
     attributes = None
@@ -433,29 +444,41 @@ class EvaluationItem(models.Model):
         """
         Reloads source, reference, and translations from self.item_xml.
         """
-        if self.item_xml:
-            try:
-                _item_xml = fromstring(self.item_xml)
-                
-                self.attributes = _item_xml.attrib
-                
-                _source = _item_xml.find('source')
-                if _source is not None:
-                    self.source = (_source.text, _source.attrib)
+        if self.id: # If it has been initialized
+            self.source = (self.item_sourceSentence.text,[])
+            systems = self.task.systems.all()
+            self.translations = []
+            for s in systems:
+                sourceDocument = self.item_sourceSentence.document
+                translatedDocument = corpus.TranslatedDocument.objects.get(source=sourceDocument,
+                                                                           system=s,
+                                                                           language=self.task.language)
+                translation = corpus.Translation.objects.get(sourceSentence=self.item_sourceSentence,
+                                                             document=translatedDocument)
+                self.translations.append((translation.text, []))
+        #if self.item_xml:
+        #    try:
+        #        _item_xml = fromstring(self.item_xml)
+        #        
+        #        self.attributes = _item_xml.attrib
+        #        
+        #        _source = _item_xml.find('source')
+        #        if _source is not None:
+        #            self.source = (_source.text, _source.attrib)
 
-                _reference = _item_xml.find('reference')
-                if _reference is not None:
-                    self.reference = (_reference.text, _reference.attrib)
-                
-                self.translations = []
-                for _translation in _item_xml.iterfind('translation'):
-                    self.translations.append((_translation.text,
-                      _translation.attrib))
-            
-            except ParseError:
-                self.source = None
-                self.reference = None
-                self.translations = None
+        #        _reference = _item_xml.find('reference')
+        #        if _reference is not None:
+        #            self.reference = (_reference.text, _reference.attrib)
+        #        
+        #        self.translations = []
+        #        for _translation in _item_xml.iterfind('translation'):
+        #            self.translations.append((_translation.text,
+        #              _translation.attrib))
+        #    
+        #    except ParseError:
+        #        self.source = None
+        #        self.reference = None
+        #        self.translations = None
 
 
 class EvaluationResult(models.Model):

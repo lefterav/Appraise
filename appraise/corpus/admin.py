@@ -17,3 +17,7 @@ admin.site.register(corpus.models.SourceDocument, SourceDocumentAdmin)
 admin.site.register(corpus.models.Corpus)
 admin.site.register(corpus.models.EvaluationCampaign)
 admin.site.register(corpus.models.TranslatedDocument)
+admin.site.register(corpus.models.Sentence)
+admin.site.register(corpus.models.SourceSentence)
+admin.site.register(corpus.models.Translation)
+

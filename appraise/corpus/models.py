@@ -89,8 +89,8 @@ class SourceSentence(Sentence):
         return self.customId
 
 # Sentences produced by a translation system
-class Translation(models.Model):
+class Translation(Sentence):
     sourceSentence = models.ForeignKey(SourceSentence)
 
     def __unicode__(self):
-        return "%s - %s - %s" % (sourceSentence.__unicode__(), language.id, system.__unicode__())
+        return "%s - %s" % (self.sourceSentence.__unicode__(), self.document.language.id)

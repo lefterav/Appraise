@@ -57,14 +57,16 @@ if options.campaign:
 
 # Adding the sentences
 for (n, l) in enumerate(fp):
-    s = d.sentence_set.create(text=l.strip())
+    #s = d.sourcesentence_set.create(text=l.strip())
+    s = models.SourceSentence(text=l.strip())
+    s.document = d
     if not options.uniqueSentenceId:
         s.customId = "%d" % (n+1)
     else:
         if campaign:
-            s.customId = "%s__%s__%d" % (campaign.id, d.id, (n+1))
+            s.customId = "%s__%s__%d" % (campaign.id, d.customId, (n+1))
         else:
-            s.customId = "%s__%d" % (d.id, (n+1))
+            s.customId = "%s__%d" % (d.customId, (n+1))
     s.save()
 d.save()
 log.write("Document \"%s\" stored in database with %d sentences.\n" % (d.customId, len(d.sentence_set.all())))

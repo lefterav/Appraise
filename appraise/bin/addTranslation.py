@@ -35,12 +35,12 @@ except models.Document.DoesNotExist:
 try:
     language = models.Language.objects.get(id=options.language)
 except models.Language.DoesNotExist:
-    sys.stderr.write("Error: language \"%s\" not found in the database!" % options.language)
+    sys.stderr.write("Error: language \"%s\" not found in the database!\n" % options.language)
     sys.exit(1)
 try:
     system = models.TranslationSystem.objects.get(id=options.system)
 except models.TranslationSystem.DoesNotExist:
-    sys.stderr.write("Error: system \"%s\" not found in the database!" % options.system)
+    sys.stderr.write("Error: system \"%s\" not found in the database!\n" % options.system)
     sys.exit(1)
     
 campaign = None
@@ -64,3 +64,4 @@ for d2c in document2corpuses:
     for s in sentences:
         l = fp.readline().strip()
         translation = models.Translation(sourceSentence=s, text=l, document=translatedDocument)
+        translation.save()
