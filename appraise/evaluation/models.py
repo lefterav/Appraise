@@ -20,7 +20,7 @@ from django.template.loader import get_template
 from appraise.settings import LOG_LEVEL, LOG_HANDLER
 from appraise.utils import datetime_to_seconds
 
-import corpus.models as corpus
+import corpus.models as corpusM
 
 # Setup logging support.
 logging.basicConfig(level=LOG_LEVEL)
@@ -98,7 +98,7 @@ class EvaluationTask(models.Model):
       verbose_name="Task type"
     )
 
-    task_xml = models.TextField()
+    #task_xml = models.TextField(blank=True)
     #task_xml = models.FileField(
     #  upload_to='source-xml',
     #  help_text="XML source file for this evaluation task.",
@@ -124,9 +124,11 @@ class EvaluationTask(models.Model):
       help_text="(Optional) Users allowed to work on this evaluation task."
     )
 
-    systems = models.ManyToManyField(corpus.TranslationSystem)
+    corpus = models.ForeignKey(corpusM.Corpus)
+    
+    systems = models.ManyToManyField(corpusM.TranslationSystem)
 
-    language = models.ForeignKey(corpus.Language)
+    targetLanguage = models.ForeignKey(corpusM.Language)
 
     active = models.BooleanField(
       db_index=True,
@@ -177,26 +179,19 @@ class EvaluationTask(models.Model):
         return new_id
     
     def save(self, *args, **kwargs):
-        """
-        Makes sure that validation is run before saving an object instance.
-        """
-        # Enforce validation before saving EvaluationTask objects.
         if not self.id:
             self.full_clean()
             
             # We have to call save() here to get an id for this task.
             super(EvaluationTask, self).save(*args, **kwargs)
+
+            documents = self.corpus.documents.all()
+            for d in documents:
+                sentences = corpusM.SourceSentence.objects.filter(document=d)
+                for s in sentences:
+                    i = EvaluationItem(task=self,item_sourceSentence=s)
+                    i.save()
             
-            #self.task_xml.open()
-            #_tree = fromstring(self.task_xml.read())
-            #self.task_xml.close()
-            _tree = []
-            
-            for _child in _tree:
-                new_item = EvaluationItem(task=self,
-                  item_xml=tostring(_child))
-                new_item.save()
-        
         super(EvaluationTask, self).save(*args, **kwargs)
     
     def get_absolute_url(self):
@@ -211,16 +206,17 @@ class EvaluationTask(models.Model):
         """
         Reloads task_attributes from self.task_xml contents.
         """
+        pass
         # If a task_xml file is available, populate self.task_attributes.
-        if self.task_xml:
-            try:
-                _task_xml = fromstring(self.task_xml.read())
-                self.task_attributes = {}
-                for key, value in _task_xml.attrib.items():
-                    self.task_attributes[key] = value
-            
-            except ParseError:
-                self.task_attributes = {}
+        #if self.task_xml:
+        #    try:
+        #        _task_xml = fromstring(self.task_xml.read())
+        #        self.task_attributes = {}
+        #        for key, value in _task_xml.attrib.items():
+        #            self.task_attributes[key] = value
+        #    
+        #    except ParseError:
+        #        self.task_attributes = {}
     
     def get_status_header(self):
         """
@@ -332,59 +328,6 @@ class EvaluationTask(models.Model):
         return template.render(Context(context))
 
 
-@receiver(models.signals.pre_delete, sender=EvaluationTask)
-def remove_task_xml_file_on_delete(sender, instance, **kwargs):
-    """
-    Removes the task_xml file when the EvaluationTask instance is deleted.
-    """
-    # We have to use save=False as otherwise validation would fail ;)
-    if len(instance.task_xml.name):
-        instance.task_xml.delete(save=False)
-
-
-def validate_item_xml(value):
-    """
-    Checks that item_xml contains source, reference, some translation tags.
-    """
-    try:
-        if isinstance(value, Element):
-            _tree = value
-        
-        else:
-            _tree = fromstring(value)
-        
-        if not _tree.tag == 'seg':
-            raise ValidationError('Invalid XML: illegal tag: "{0}".'.format(
-              _tree.tag))
-        
-        for _attr in ('id', 'doc-id'):
-            assert(_attr in _tree.attrib.keys()), \
-              'missing required <seg> attribute {0}'.format(_attr)
-        
-        assert(len(_tree.findall('source')) == 1), \
-          'exactly one <source> element expected'
-        
-        assert(_tree.find('source').text is not None), \
-          'missing required <source> text value'
-        
-        if _tree.find('reference') is not None:
-            assert(_tree.find('reference').text is not None), \
-              'missing required <reference> text value'
-        
-        assert(len(_tree.findall('translation')) >= 1), \
-          'one or more <translation> elements expected'
-        
-        for _translation in _tree.iterfind('translation'):
-            assert('system' in _translation.attrib.keys()), \
-              'missing required <translation> attribute "system"'
-            
-            assert(_translation.text is not None), \
-              'missing required <translation> text value'
-    
-    except (AssertionError, ParseError), msg:
-        raise ValidationError('Invalid XML: "{0}".'.format(msg))
-
-
 class EvaluationItem(models.Model):
     """
     Evaluation Item object model.
@@ -397,10 +340,11 @@ class EvaluationItem(models.Model):
     item_xml = models.TextField(
       help_text="XML source for this evaluation item.",
       #validators=[validate_item_xml],
-      verbose_name="Translations XML source"
+      verbose_name="Translations XML source",
+      blank=True
     )
 
-    item_sourceSentence = models.ForeignKey(corpus.SourceSentence)
+    item_sourceSentence = models.ForeignKey(corpusM.SourceSentence)
     
     # These fields are derived from item_xml and NOT stored in the database.
     attributes = None
@@ -450,10 +394,10 @@ class EvaluationItem(models.Model):
             self.translations = []
             for s in systems:
                 sourceDocument = self.item_sourceSentence.document
-                translatedDocument = corpus.TranslatedDocument.objects.get(source=sourceDocument,
+                translatedDocument = corpusM.TranslatedDocument.objects.get(source=sourceDocument,
                                                                            system=s,
-                                                                           language=self.task.language)
-                translation = corpus.Translation.objects.get(sourceSentence=self.item_sourceSentence,
+                                                                           language=self.task.targetLanguage)
+                translation = corpusM.Translation.objects.get(sourceSentence=self.item_sourceSentence,
                                                              document=translatedDocument)
                 self.translations.append((translation.text, []))
         #if self.item_xml:

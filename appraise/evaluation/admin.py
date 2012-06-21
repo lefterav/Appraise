@@ -106,7 +106,7 @@ class EvaluationTaskAdmin(admin.ModelAdmin):
     fieldsets = (
       ('Required Information', {
         'classes': ('wide',),
-        'fields': ('task_name', 'task_type', 'task_xml','systems', 'language')
+        'fields': ('task_name', 'task_type', 'targetLanguage', 'systems', 'corpus')
       }),
       ('Optional Information', {
         'classes': ('wide',),
@@ -121,7 +121,7 @@ class EvaluationTaskAdmin(admin.ModelAdmin):
         - http://stackoverflow.com/questions/2639654/django-read-only-field
         """
         if obj is not None:
-            return self.readonly_fields + ('task_xml', 'task_type')
+            return self.readonly_fields + ('task_type')
         
         return self.readonly_fields
 
