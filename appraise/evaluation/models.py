@@ -98,16 +98,7 @@ class EvaluationTask(models.Model):
       verbose_name="Task type"
     )
 
-    #task_xml = models.TextField(blank=True)
-    #task_xml = models.FileField(
-    #  upload_to='source-xml',
-    #  help_text="XML source file for this evaluation task.",
-    #  #validators=[validate_source_xml_file],
-    #  verbose_name="Task XML source",
-    #  blank=True
-    #)
-
-    # This is derived from task_xml and NOT stored in the database.
+    # This was derived from task_xml and NOT stored in the database.
     task_attributes = {}
 
     description = models.TextField(
@@ -189,7 +180,7 @@ class EvaluationTask(models.Model):
             for d in documents:
                 sentences = corpusM.SourceSentence.objects.filter(document=d)
                 for s in sentences:
-                    i = EvaluationItem(task=self,item_sourceSentence=s)
+                    i = EvaluationItem(task=self,sourceSentence=s)
                     i.save()
             
         super(EvaluationTask, self).save(*args, **kwargs)
@@ -337,14 +328,7 @@ class EvaluationItem(models.Model):
       db_index=True
     )
     
-    item_xml = models.TextField(
-      help_text="XML source for this evaluation item.",
-      #validators=[validate_item_xml],
-      verbose_name="Translations XML source",
-      blank=True
-    )
-
-    item_sourceSentence = models.ForeignKey(corpusM.SourceSentence)
+    sourceSentence = models.ForeignKey(corpusM.SourceSentence)
     
     # These fields are derived from item_xml and NOT stored in the database.
     attributes = None
@@ -366,7 +350,6 @@ class EvaluationItem(models.Model):
         """
         super(EvaluationItem, self).__init__(*args, **kwargs)
         
-        # If item_xml is available, populate dynamic fields.
         self.reload_dynamic_fields()
     
     def __unicode__(self):
@@ -389,41 +372,53 @@ class EvaluationItem(models.Model):
         Reloads source, reference, and translations from self.item_xml.
         """
         if self.id: # If it has been initialized
-            self.source = (self.item_sourceSentence.text,[])
+            self.reference = None
+
+            self.source = (self.sourceSentence.text,[])
             systems = self.task.systems.all()
             self.translations = []
             for s in systems:
-                sourceDocument = self.item_sourceSentence.document
+                sourceDocument = self.sourceSentence.document
                 translatedDocument = corpusM.TranslatedDocument.objects.get(source=sourceDocument,
                                                                            system=s,
                                                                            language=self.task.targetLanguage)
-                translation = corpusM.Translation.objects.get(sourceSentence=self.item_sourceSentence,
+                translation = corpusM.Translation.objects.get(sourceSentence=self.sourceSentence,
                                                              document=translatedDocument)
                 self.translations.append((translation.text, []))
-        #if self.item_xml:
-        #    try:
-        #        _item_xml = fromstring(self.item_xml)
-        #        
-        #        self.attributes = _item_xml.attrib
-        #        
-        #        _source = _item_xml.find('source')
-        #        if _source is not None:
-        #            self.source = (_source.text, _source.attrib)
 
-        #        _reference = _item_xml.find('reference')
-        #        if _reference is not None:
-        #            self.reference = (_reference.text, _reference.attrib)
-        #        
-        #        self.translations = []
-        #        for _translation in _item_xml.iterfind('translation'):
-        #            self.translations.append((_translation.text,
-        #              _translation.attrib))
-        #    
-        #    except ParseError:
-        #        self.source = None
-        #        self.reference = None
-        #        self.translations = None
 
+class NewEvaluationResult(models.Model):
+    """
+    Evaluation Result object model.
+    """
+    item = models.ForeignKey(EvaluationItem, db_index=True)
+    user = models.ForeignKey(User, db_index=True)
+    duration = models.TimeField(blank=True, null=True, editable=False)
+
+    class Meta:
+        """
+        Metadata options for the EvaluationResult object model.
+        """
+        ordering = ('id',)
+        verbose_name = "EvaluationResult object"
+        verbose_name_plural = "EvaluationResult objects"
+
+    def readable_duration(self):
+        """
+        Returns a readable version of the this EvaluationResult's duration.
+        """
+        return '{}'.format(self.duration)
+
+    def __unicode__(self):
+        """
+        Returns a Unicode String for this EvaluationResult object.
+        """
+        return u'<evaluation-result id="{0}">'.format(self.id)
+
+class RankingResult(NewEvaluationResult):
+    translation = model.ForeignKey(corpus.Translation)
+    rank = model.IntegerField()
+    
 
 class EvaluationResult(models.Model):
     """
