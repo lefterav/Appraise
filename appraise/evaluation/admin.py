@@ -120,8 +120,8 @@ class EvaluationTaskAdmin(admin.ModelAdmin):
         
         - http://stackoverflow.com/questions/2639654/django-read-only-field
         """
-        if obj is not None:
-            return self.readonly_fields + ('task_type')
+        #if obj is not None:
+        #    return self.readonly_fields + ('task_type')
         
         return self.readonly_fields
 

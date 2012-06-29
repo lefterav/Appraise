@@ -208,6 +208,7 @@ def _handle_ranking(request, task, items):
         for index in range(len(current_item.translations)):
             rank = request.POST.get('rank_{0}'.format(index), -1)
             ranks[order[index]] = int(rank)
+        print ranks
         
         # If "Flag Error" was clicked, _raw_result is set to "SKIPPED".
         if submit_button == 'FLAG_ERROR':
@@ -217,6 +218,12 @@ def _handle_ranking(request, task, items):
         elif submit_button == 'SUBMIT':
             _raw_result = range(len(current_item.translations))
             _raw_result = ','.join([str(ranks[x]) for x in _raw_result])
+
+            print _raw_result
+            systems = current_item.task.systems.all()
+            for (n, s) in enumerate(systems):
+                print "{}. {} position {}".format(n, s.id, ranks[n])
+        
         
         # Save results for this item to the Django database.
         _save_results(current_item, request.user, duration, _raw_result)

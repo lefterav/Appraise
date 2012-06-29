@@ -36,39 +36,6 @@ APPRAISE_TASK_TYPE_CHOICES = (
   ('5', '3-Way Ranking'),
 )
 
-
-def validate_source_xml_file(value):
-    """
-    Validates the given XML source value.
-    """
-    value.open()
-    
-    # First, we try to instantiate an ElementTree from the given value.
-    try:
-        _tree = fromstring(value.read())
-        
-        # Then, we check that the top-level tag name is <set>.
-        assert(_tree.tag == 'set'), 'expected <set> on top-level'
-        
-        # And that required XML attributes are available.
-        for _attr in ('id', 'source-language', 'target-language'):
-            assert(_attr in _tree.attrib.keys()), \
-              'missing required <set> attribute {0}'.format(_attr)
-        
-        # Finally, we check that all children of <set> are <seg> containers
-        # and make sure that each <seg> element contains at least a <source>
-        # and one <translation> element.  The <translation> elements require
-        # at least one XML attribute "system" and some value to be valid.
-        for _child in _tree:
-            validate_item_xml(_child)
-    
-    except (AssertionError, ParseError), msg:
-        raise ValidationError('Invalid XML: "{0}".'.format(msg))
-    
-    value.close()
-    return value
-
-
 class EvaluationTask(models.Model):
     """
     Evaluation Task object model.
@@ -416,8 +383,8 @@ class NewEvaluationResult(models.Model):
         return u'<evaluation-result id="{0}">'.format(self.id)
 
 class RankingResult(NewEvaluationResult):
-    translation = model.ForeignKey(corpus.Translation)
-    rank = model.IntegerField()
+    translation = models.ForeignKey(corpusM.Translation)
+    rank = models.IntegerField()
     
 
 class EvaluationResult(models.Model):
