@@ -121,5 +121,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     
     'appraise.evaluation',
-    'corpus'
+    'corpus',
+    'django_extensions'
 )
