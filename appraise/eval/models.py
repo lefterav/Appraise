@@ -104,7 +104,22 @@ class EvaluationResult(models.Model):
     """
     item = models.ForeignKey(EvaluationItem)
     timestamp = models.DateTimeField()
-    duration = models.TimeField()
+    duration = models.TimeField(blank=True, null=True, editable=False)
+    user = models.ForeignKey(User, db_index=True)
+
+    class Meta:
+        """
+        Metadata options for the EvaluationResult object model.
+        """
+        ordering = ('id',)
+        verbose_name = "EvaluationResult object"
+        verbose_name_plural = "EvaluationResult objects"
+
+    def readable_duration(self):
+        """
+        Returns a readable version of the this EvaluationResult's duration.
+        """
+        return '{}'.format(self.duration)
     
 #### RANKING TASK
 class RankResult(EvaluationResult):
