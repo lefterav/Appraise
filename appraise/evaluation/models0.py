@@ -147,7 +147,7 @@ class EvaluationTask(models.Model):
             for d in documents:
                 sentences = corpusM.SourceSentence.objects.filter(document=d)
                 for s in sentences:
-                    i = EvaluationItem(task=self,sourceSentence=s)
+                    i = EvaluationItem(task=self,source_sentence=s)
                     i.save()
             
         super(EvaluationTask, self).save(*args, **kwargs)
@@ -295,7 +295,7 @@ class EvaluationItem(models.Model):
       db_index=True
     )
     
-    sourceSentence = models.ForeignKey(corpusM.SourceSentence)
+    source_sentence = models.ForeignKey(corpusM.SourceSentence)
     
     # These fields are derived from item_xml and NOT stored in the database.
     attributes = None
@@ -341,15 +341,15 @@ class EvaluationItem(models.Model):
         if self.id: # If it has been initialized
             self.reference = None
 
-            self.source = (self.sourceSentence.text,[])
+            self.source = (self.source_sentence.text,[])
             systems = self.task.systems.all()
             self.translations = []
             for s in systems:
-                sourceDocument = self.sourceSentence.document
+                sourceDocument = self.source_sentence.document
                 translatedDocument = corpusM.TranslatedDocument.objects.get(source=sourceDocument,
                                                                            system=s,
                                                                            language=self.task.targetLanguage)
-                translation = corpusM.Translation.objects.get(sourceSentence=self.sourceSentence,
+                translation = corpusM.Translation.objects.get(source_sentence=self.source_sentence,
                                                              document=translatedDocument)
                 self.translations.append((translation.text, []))
 

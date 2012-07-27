@@ -8,62 +8,107 @@
 # into your database.
 
 from django.db import models
-from django.contrib.admin.util import help_text_for_field
-"""
-    Language
-"""
 
+"""
+    These models handle the definition of languages and language pairs
+"""
 class Language(models.Model):
-#    id = models.IntegerField(primary_key=True)
+    """
+        Each language can have a (short) name, a native name and a full name  
+    """
     name = models.CharField(
-                            max_length=3,
-                            help_text_for_field="A short name defining the Language. Ideally the ISO language code",
-                            verbose_name = "Language code"
-                            )
-    long_name = models.CharField(max_length=120)
-    class Meta:
-        db_table = u'languages'
+        max_length=3,
+        verbose_name = "Language code",
+        help_text="A short name defining the Language. Ideally the ISO language code (e.g. 'en')",
+        db_index=True,
+        unique=True,
+    )
+    native_name = models.CharField(
+        max_length=120,
+        blank = True,
+        verbose_name = "Language full name (native)",
+        help_text="The original name of the language",
+    )
+    english_name = models.CharField(
+        max_length=120,
+        blank = True,
+        verbose_name = "Language full name (in English)",
+        help_text="The full name of the language in English",
+    )
+    #whenever this model is called for print functions, display its name
+    def __unicode__(self):
+        return self.name
+
+
+class LanguageDirection(models.Model):
+    """
+        A language direction defines a source and a target language, to be used by 
+        bilingual systems and machine translation engines
+    """
+    name = models.CharField(
+        max_length=90,
+        help_text="A short name defining the Language Direction, i.e. a source and a target language. \
+            Ideally a combination of ISO language codes (e.g. 'de-en')",
+        verbose_name = "Language pair codes",
+        db_index=True,
+        unique=True,
+    )
+    source_language = models.ForeignKey(
+        Language,
+        #added to avoid modelling conflict with next field
+        related_name = "source_language"   
+    )
+    target_language = models.ForeignKey(
+        Language,
+        related_name = "target_language"   
+    )
+    english_name = models.CharField(
+        max_length=90,
+        blank=True,
+        db_index=True,
+        help_text="A long name defining the Language Direction",
+        verbose_name = "Language pair long name",
+    )
     
     def __unicode__(self):
         return self.name
 
-class LanguageDirection(models.Model):
-##    id = models.IntegerField(primary_key=True)
-    source_language = models.ForeignKey(
-      Language,
-      related_name = "source_language"   
-    )
-    target_language = models.ForeignKey(
-      Language,
-      related_name = "target_language"   
-    )
-    name = models.CharField(max_length=90)
-    class Meta:
-        db_table = u'language_directions'
 
-
-"""
-    System is an abstract table which only holds the name. We may have an TranslationSystem, which
-    delivers translations and features and has a language direction, or an analysis system that 
-    delivers language-specific analysis either monolingual or bilingual
-"""
 class System(models.Model):
+    """
+        A system is an abstract model which only holds the name. It may be inherited by a TranslationSystem, which
+        delivers translations and features and has a language direction, or an Analysis System that 
+        delivers language-specific analysis either monolingual or bilingual
+    """
 ##    id = models.IntegerField(primary_key=True)    
-    name = models.CharField(max_length=60)
-    long_name = models.CharField(max_length=120)
+    name = models.CharField(
+        max_length=60,
+        verbose_name = "System name",
+    )
+    long_name = models.CharField(
+                                 max_length=120,
+                                 blank=True
+                                 )
 
 class MonoAnalysisSystem(System):
+    """
+        A system which produces monolingual analysis and features
+        @note: replaced CltSystem, CltSupport
+    """
     supported_languages = models.ManyToManyField(Language)
 
 class BiAnalysisSystem(System):
+    """
+        A system which produces bilingual analysis and features
+    """
     supported_language_directions = models.ManyToManyField(LanguageDirection)
 
 class TranslationSystem(System):
+    """
+        A system that produces machine translation
+        @note: replaced MtSystem and MtSystemSupport
+    """
     supported_language_directions = models.ManyToManyField(LanguageDirection)
-    
-    class Meta: #@TODO: fix db_tables for models missing, if needed
-        db_table = u'mt_systems'
-
 
 
 
@@ -72,54 +117,54 @@ class TranslationSystem(System):
 """
 
 
-
-
 class Domain(models.Model):
-#    id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=60)
-    long_name = models.CharField(max_length=210)
-    class Meta:
-        db_table = u'domains'
+    long_name = models.CharField(
+                                 max_length=210,
+                                 blank=True
+                                 )
 
 class Status(models.Model):
     name = models.CharField(max_length=60)
     
-    
-    
 class DocumentClass(models.Model):
-#    id = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=60)
-    long_name = models.CharField(max_length=120)
-    class Meta:
-        db_table = u'project_class'
+    long_name = models.CharField(
+                                 max_length=120,
+                                 blank=True)
 
-class DocumentSubclass(models.Model):
-#    id = models.IntegerField(primary_key=True)
+class DocumentSubclass(models.Model): 
     name = models.CharField(max_length=60)
-    long_name = models.CharField(max_length=120)
-    class Meta:
-        db_table = u'project_subclass'
-#
-#class ProjectFilename(models.Model):
-##    id = models.IntegerField(primary_key=True)
-#    name = models.CharField(max_length=300)
-#    class Meta:
-#        db_table = u'project_filename'
-        
+    long_name = models.CharField(
+                                 max_length=120,
+                                 blank=True
+                                 )
 
-################################################################################
-# The basic unit for containing sentences to translate. The documents
-# will afterwards be grouped into corpora (see below).
+
+
 class Document(models.Model):
+    """
+        The basic unit for containing sentences to translate. The documents
+        will afterwards be grouped into corpora (see below).
+    """
     language = models.ForeignKey(Language)
-    filename = models.CharField(max_length = 200)
-#    campaigns = models.ManyToManyField("EvaluationCampaign")
+    filename = models.CharField(
+                                max_length = 200,
+                                blank=True
+                                )
 
 
-
-# A document that is to be translated
 class SourceDocument(Document):
-    custom_id = models.CharField(max_length = 200)
+    """
+        A document that is to be translated. All the original sentences
+        of a document belong to this object. Translations of this document
+        are organised with a TranslatedDocument
+        @note: replaced TestSet        
+    """
+    custom_id = models.CharField(
+                                 max_length = 200,
+                                 help_text="This field should serve for entering a user defined sentence id"
+                                 )
     domain = models.ForeignKey(Domain)
     document_class = models.ForeignKey(DocumentClass)
     document_subclass = models.ForeignKey(DocumentSubclass)
@@ -127,30 +172,39 @@ class SourceDocument(Document):
     def __unicode__(self):
         return "%s (%s)" % (self.custom_id, self.language.name)
 
-# A translation of a document
 class TranslatedDocument(Document):
+    """
+        A translation of a document. As a source document can have many
+        full translations, this points to a source documents 
+        @note: replaced Project
+    """
     source = models.ForeignKey(SourceDocument)
     status = models.ForeignKey(Status)
 
     def __unicode__(self):
         return "%s (%s: %s => %s)" % (self.source.custom_id, self.system.id,
-                                      self.source.language.id, self.language.name)
+                                      self.source.language.name, self.language.name)
 
-# A collection of documents
 class Corpus(models.Model):
+    """
+        A collection of documents
+    """
     custom_id = models.CharField(max_length = 200)
-    description = models.TextField()
+    description = models.TextField(
+                                   blank=True
+                                   )
     documents = models.ManyToManyField(SourceDocument, through="Document2Corpus")
-#    campaigns = models.ManyToManyField(EvaluationCampaign)
     language = models.ForeignKey(Language)
 
     def __unicode__(self):
         return "%s (%s)" % (self.custom_id, self.language.name)
 
-# Intermediate table for storing the order of the documents in a corpus
-# If http://pypi.python.org/pypi/django-sortedm2m is updated to django
-# 1.4 we may switch to it
 class Document2Corpus(models.Model):
+    """
+        Intermediate table for storing the order of the documents in a corpus
+        If http://pypi.python.org/pypi/django-sortedm2m is updated to django
+        1.4 we may switch to it
+    """
     document = models.ForeignKey(SourceDocument)
     corpus = models.ForeignKey(Corpus)
     order = models.IntegerField()
@@ -158,46 +212,41 @@ class Document2Corpus(models.Model):
     class Meta:
         ordering = ['order']
 
-################################################################################
-# The base class for the sentences
-# Note that we do not want to work with sentences alone, instead we
-# work with documents and corpora. As such information like language,
-# system, etc. are stored in those classes
+
 class Sentence(models.Model):
+    """
+        The base class for the sentences
+        Note that we do not want to work with sentences alone, instead we
+        work with documents and corpora. As such information like language,
+        system, etc. are stored in those classes
+    """
     text = models.TextField()
     document = models.ForeignKey(Document)
+    
 
-
-# These are the sentences in the SourceDocuments
 class SourceSentence(Sentence):
+    """
+        These are the sentences in the SourceDocuments
+    """
     custom_id = models.CharField(max_length=200)
 
     def __unicode__(self):
         return self.custom_id
+    
 
-# Sentences produced by a translation system
 class Translation(Sentence):
-    sourceSentence = models.ForeignKey(SourceSentence)
-    mt_system = models.ForeignKey(TranslationSystem)
+    """
+        Sentences produced by a translation system
+        @note: replaced Content
+    """
+    source_sentence = models.ForeignKey(SourceSentence)
+    translation_system = models.ForeignKey(
+        TranslationSystem,
+        help_text = "Choose the translation system that produced this sentence"
+    )
 
     def __unicode__(self):
-        return "%s - %s" % (self.sourceSentence, self.document.language.name)
-
-
-
-
-
-
-
-
-# This has been replaced by Document
-#class Testsets(models.Model):
-##    id = models.IntegerField(primary_key=True)
-#    name = models.CharField(max_length=90)
-#    long_name = models.CharField(max_length=150)
-#    class Meta:
-#        db_table = u'testsets'
-
+        return "%s - %s" % (self.source_sentence, self.document.language.name)
 
 
 
@@ -208,241 +257,40 @@ class Translation(Sentence):
     * Each system may provide features on one or many feature sets
     * Each feature set may contain many features
     * Each sentence may be annotated by each of the features with a respective feature value
+    @note: replaced Lucy, AcrolinxChecks, Trados
 """
 class FeatureSet(models.Model):
-#    id = models.IntegerField(primary_key=True)
-    name = models.CharField(max_length=120)
-    name = models.CharField(max_length=10)
+    name = models.CharField(
+                            max_length=10,
+                            unique=True
+                            )
+    long_name = models.CharField(
+                                 max_length=120,
+                                 blank=True
+                                 )
     source = models.ForeignKey(System)
     
 class Feature(models.Model):
-#    id = models.IntegerField(primary_key=True)
     feature_set = models.ForeignKey(FeatureSet)
     name = models.CharField(max_length=120)
-    details = models.TextField()
-    type = models.CharField(max_length=120)
+    details = models.TextField(
+                               blank=True
+                               )
+    type = models.CharField(
+                            blank=True, #not sure
+                            max_length=120
+                            )
 
 class FeatureValue(models.Model):
-#    id = models.IntegerField(primary_key=True)
     sentence = models.ForeignKey(Sentence)
     feature = models.ForeignKey(Feature)
     value = models.TextField()
-    details = models.TextField()
+    details = models.TextField(
+                               blank=True
+                               )
 
 
 
-
-# I guess this is replaced by the ManyToManyField of TranslationSystem
-#class MtSupport(models.Model):
-##    id = models.IntegerField(primary_key=True)
-#    lang_dir = models.ForeignKey(LanguageDirection)
-#    mt_system = models.ForeignKey(TranslationSystem)
-#    supported = models.IntegerField()
-#    class Meta:
-#        db_table = u'mt_support'
-
-
-
-
-"""
-    It is suggested that the following models be removed and their contents
-    be transferred in the Feature and FeatureSet model
-"""
-#class AcrolinxChecks(models.Model):
-##    id = models.IntegerField(primary_key=True)
-#    type = models.CharField(max_length=120)
-#    error = models.CharField(max_length=765)
-#    error_detailed = models.CharField(max_length=765)
-#    sentence = models.ForeignKey(Sentence)
-#    mt_system = models.ForeignKey(TranslationSystem)
-#    class Meta:
-#        db_table = u'acrolinx_checks'
-
-
-#class Lucy(models.Model):
-##    id = models.IntegerField(primary_key=True)
-#    sentence = models.ForeignKey(Sentence)
-#    phrs_analysis = models.IntegerField()
-#    phrs_transfer = models.IntegerField()
-#    phrs_generation = models.IntegerField()
-#    ukw_src = models.TextField()
-#    ukw_trg = models.TextField()
-#    context_sentence = models.TextField()
-#    tree_analysis = models.TextField()
-#    tree_transfer = models.TextField()
-#    tree_generation = models.TextField()
-#    ukw_count = models.IntegerField()
-#    alternatives_count = models.IntegerField()
-#    morph_count = models.IntegerField()
-#    subject_areas = models.TextField()
-#    class Meta:
-#        db_table = u'lucy'
-#
-#class Trados(models.Model):
-##    id = models.IntegerField(primary_key=True)
-#    sentenceid = models.ForeignKey(Sentence, db_column='sentenceID') # Field name made lowercase.
-#    match_value = models.IntegerField()
-#    class Meta:
-#        db_table = u'trados'
-#        
-
-
-"""
-    @TODO: read some documentation for the use of these
-"""
-class CltSystem(models.Model):
-#    id = models.IntegerField(primary_key=True)
-    name = models.CharField(max_length=60)
-    long_name = models.CharField(max_length=120)
-    class Meta:
-        db_table = u'clt_systems'
-
-class CltSupport(models.Model):
-#    id = models.IntegerField(primary_key=True)
-    clt_system = models.ForeignKey(CltSystem)
-    lang = models.ForeignKey(Language)
-    supported = models.IntegerField()
-    class Meta:
-        db_table = u'clt_support'
-
-
-
-
-"""
-    Evaluation-related
-"""
-
-# Replaced with Translation 
-
-#class Content(models.Model):
-##    id = models.IntegerField(primary_key=True)
-#    sentence = models.ForeignKey(Sentence)
-#    project = models.ForeignKey(Project)
-#    project_filename = models.ForeignKey(ProjectFilename)
-#    mt_system = models.ForeignKey(TranslationSystem)
-#    content_target = models.TextField()
-#    class Meta:
-#        db_table = u'content'
-
-
-
-
-        
-
-
-
-
-
-#class Project(models.Model): #replaced by SourceDocument
-##    id = models.IntegerField(primary_key=True)
-#    lang_dir = models.ForeignKey(LanguageDirection)
-#    status = models.ForeignKey(Status)
-#    name = models.CharField(max_length=150)
-#    long_name = models.CharField(max_length=300)
-#    project_class = models.ForeignKey(ProjectClass)
-#    project_subclass = models.ForeignKey(ProjectSubclass)
-#    domain = models.ForeignKey(Domain)
-#    project_filename = models.ForeignKey(ProjectFilename)
-#    class Meta:
-#        db_table = u'projects'
-
-
-
-#class Eval(models.Model):
-##    id = models.IntegerField(primary_key=True)
-##    content = models.ForeignKey(Content)
-#    rank = models.IntegerField()
-#    bleu = models.IntegerField()
-#    per = models.IntegerField()
-##    trados_match_rate = models.ForeignKey(Trados, db_column='trados_match_rate')
-#    project_filename = models.ForeignKey(ProjectFilename)
-#    eval_round_id = models.IntegerField()
-#    testset = models.ForeignKey(Testsets)
-#    rank_user = models.CharField(max_length=765)
-#    rank_id = models.IntegerField()
-#    lang_dir = models.ForeignKey(LanguageDirection)
-#    mt_system = models.ForeignKey(TranslationSystem)
-#    pe_id = models.IntegerField()
-#    pe_user = models.CharField(max_length=765)
-#    pe_lev = models.IntegerField()
-#    pe_lev_diff = models.IntegerField()
-#    classification_user = models.CharField(max_length=765)
-#    error_class = models.ForeignKey(ErrorClass)
-#    project = models.ForeignKey(Project)
-#    
-#    class Meta:
-#        db_table = u'eval'
-
-"""
-    Our evaluation
-"""
-
-################################################################################
-# We will organzie most of the material in "Evaluation Campaigns",
-# e.g. "WMT2012", "TaraXU R2", etc.
-
-class EvalCampaign(models.Model):
-    name = models.CharField(max_length = 200)
-    #this defines which documents are available to this Evaluation Campaign, but is not binding
-    documents = models.ManyToManyField(SourceDocument)
-    description = models.TextField()
-
-class EvalTask(models.Model):
-    name = models.CharField(max_length = 200)
-    campaign = models.ForeignKey(EvalCampaign)
-    domain = models.ForeignKey(Domain)
-
-#This helps us define an item for a task
-class EvalItem(models.Model):
-    source_sentence = models.ForeignKey(SourceSentence)
-    translations = models.ManyToManyField(Translation)
-    task = models.ForeignKey(EvalTask)
-
-class EvalResult(models.Model):
-    item = models.ForeignKey(EvalItem)
-    timestamp = models.DateTimeField()
-    
-class PostEditedSentence(Sentence):
-    original_sentence =  models.ForeignKey(Translation)
-
-class PostEditResult(EvalResult):
-    postedited_sentence = models.ForeignKey(PostEditedSentence)
-
-class ErrorClass(models.Model):
-    name = models.CharField(max_length=300)
-    task = models.ForeignKey(EvalTask)
-    
-    
-
-    
-
-    
-
-
-        
-"""
-    Selection mechanism
-"""
-# @TODO: This table is not very handy for the statistical experiments
-# because rules are not necessarily fixed.
-class Rule(models.Model):
-#    id = models.IntegerField(primary_key=True)
-    rule_name = models.CharField(max_length=180)
-    description = models.CharField(max_length=765)
-    class Meta:
-        db_table = u'rules'
-
-
-class Publication(models.Model):
-#    id = models.IntegerField(primary_key=True)
-    project = models.ForeignKey(TranslatedDocument)
-    rule = models.ForeignKey(Rule)
-    creation_date = models.DateField()
-    change_date = models.DateField()
-    sentence = models.ForeignKey(SourceSentence)
-    mt_system = models.ForeignKey(TranslationSystem)
-    class Meta:
-        db_table = u'publications'
 
 
 

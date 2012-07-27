@@ -120,7 +120,9 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'django.contrib.messages',
     
-    'appraise.evaluation',
+    #'appraise.evaluation',
     'corpus',
+    'eval',
+    'selection',
     'django_extensions'
 )

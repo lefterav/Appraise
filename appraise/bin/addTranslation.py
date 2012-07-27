@@ -63,5 +63,5 @@ for d2c in document2corpuses:
     sentences = models.SourceSentence.objects.filter(document = d2c.document)
     for s in sentences:
         l = fp.readline().strip()
-        translation = models.Translation(sourceSentence=s, text=l, document=translatedDocument)
+        translation = models.Translation(source_sentence=s, text=l, document=translatedDocument)
         translation.save()
