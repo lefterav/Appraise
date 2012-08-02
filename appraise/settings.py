@@ -73,12 +73,14 @@ MEDIA_ROOT = '{0}/media/'.format(ROOT_PATH)
 # URL that handles the media served from MEDIA_ROOT. Make sure to use a
 # trailing slash if there is a path component (optional in other cases).
 # Examples: "http://media.lawrence.com", "http://example.com/media/"
-MEDIA_URL = 'http://www.dfki.de/appraise/site_media/'
+#MEDIA_URL = 'http://www.dfki.de/appraise/site_media/'
+MEDIA_URL = 'http://www.dfki.de/appraise/files/'
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
 # Examples: "http://foo.com/media/", "/media/".
-ADMIN_MEDIA_PREFIX = 'http://www.dfki.de/appraise/site_media/'
+#ADMIN_MEDIA_PREFIX = 'http://www.dfki.de/appraise/site_media/'
+ADMIN_MEDIA_PREFIX = 'http://www.dfki.de/appraise/files/admin/'
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = '7h$+o^h4f%q#d$u7d^1!3s#a-+u5p*+p*lpz++z^q^9^+a5p--'
