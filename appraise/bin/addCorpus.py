@@ -11,7 +11,6 @@ optionParser.add_option("-h", "--help", action="help", help=optparse.SUPPRESS_HE
 optionParser.add_option("-i", "--id", dest="id", help="corpus id", metavar="ID")
 optionParser.add_option("-d", "--description", dest="description", help="corpus description", metavar="TEXT", default="")
 optionParser.add_option("-l", "--language", dest="language", help="source language (required)", metavar="LANG")
-optionParser.add_option("--campaign", dest="campaign", help="evaluation campaign for this document", metavar="ID")
 (options, args) = optionParser.parse_args()
 
 if not options.id:
@@ -24,30 +23,22 @@ if len(args) == 0:
 log = sys.stdout
 
 try:
-    language = models.Language.objects.get(id=options.language)
+    language = models.Language.objects.get(name=options.language)
 except models.Language.DoesNotExist:
     sys.stderr.write("Error: language \"%s\" not found in the database!\n" % options.language)
     sys.exit(1)
 try:
-    models.Corpus.objects.get(customId=options.id, language=language)
+    models.Corpus.objects.get(custom_id=options.id, language=language)
     sys.stderr.write("Error: corpus \"%s\" already exists in the database\n" % (options.id))
     sys.exit(1)
 except models.Corpus.DoesNotExist:
     pass
 
-corpus = models.Corpus(customId=options.id, language=language, description=options.description)
+corpus = models.Corpus(custom_id=options.id, language=language, description=options.description)
 corpus.save()
-if options.campaign:
-    try:
-        campaign = models.EvaluationCampaign.objects.get(id=options.campaign)
-        corpus.campaigns.add(campaign)
-        corpus.save()
-    except models.EvaluationCampaign.DoesNotExist:
-        sys.stderr.write("Error: Campaign \"%s\" not found\n" % options.campaign)
-        sys.exit(1)
 for (n, d) in enumerate(args):
     try:
-        document = models.SourceDocument.objects.get(customId=d, language=language)
+        document = models.SourceDocument.objects.get(custom_id=d, language=language)
         d2c = models.Document2Corpus(document=document, corpus=corpus, order=n)
         d2c.save()
         #corpus.documents.add(document)
