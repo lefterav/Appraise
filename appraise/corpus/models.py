@@ -179,7 +179,7 @@ class TranslatedDocument(Document):
         @note: replaced Project
     """
     source = models.ForeignKey(SourceDocument)
-    status = models.ForeignKey(Status)
+    status = models.ForeignKey(Status, null=True)
 
     def __unicode__(self):
         return "%s (%s: %s => %s)" % (self.source.custom_id, self.system.id,

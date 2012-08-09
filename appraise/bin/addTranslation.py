@@ -28,17 +28,17 @@ if not options.system:
 log = sys.stdout
 
 try:
-    corpus = models.Corpus.objects.get(customId=options.id)
+    corpus = models.Corpus.objects.get(custom_id=options.id)
 except models.Document.DoesNotExist:
     sys.stderr.write("Error: corpus \"%s\" does not exist in the database!\n" % options.id)
     sys.exit(1)
 try:
-    language = models.Language.objects.get(id=options.language)
+    language = models.Language.objects.get(name=options.language)
 except models.Language.DoesNotExist:
     sys.stderr.write("Error: language \"%s\" not found in the database!\n" % options.language)
     sys.exit(1)
 try:
-    system = models.TranslationSystem.objects.get(id=options.system)
+    system = models.TranslationSystem.objects.get(name=options.system)
 except models.TranslationSystem.DoesNotExist:
     sys.stderr.write("Error: system \"%s\" not found in the database!\n" % options.system)
     sys.exit(1)
@@ -51,17 +51,17 @@ if options.campaign:
         sys.stderr.write("Error: Campaign \"%s\" not found in the database!\n" % options.campaign)
         sys.exit(1)
 
-log.write("Importing translations for \"%s\" from %s (language: %s)...\n" % (options.id, args[0], language.humanReadable))
+log.write("Importing translations for \"%s\" from %s (language: %s)...\n" % (options.id, args[0], language.english_name))
 fp = open(args[0])
 document2corpuses = models.Document2Corpus.objects.filter(corpus=corpus)
 for d2c in document2corpuses:
     sourceDocument = d2c.document
-    translatedDocument = models.TranslatedDocument(source=sourceDocument,system=system,language=language)
+    translatedDocument = models.TranslatedDocument(source=sourceDocument,language=language)
     if campaign:
         translatedDocument.campaign = campaign
     translatedDocument.save()
     sentences = models.SourceSentence.objects.filter(document = d2c.document)
     for s in sentences:
         l = fp.readline().strip()
-        translation = models.Translation(source_sentence=s, text=l, document=translatedDocument)
+        translation = models.Translation(source_sentence=s, translation_system=system, text=l, document=translatedDocument)
         translation.save()

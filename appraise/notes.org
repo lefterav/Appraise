@@ -1,0 +1,4 @@
+- Removed campaigns
+- TranslationSystem: supported_language_directions?
+- System in Translation? (i.e. per sentence)
+- Status?
