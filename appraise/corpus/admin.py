@@ -28,6 +28,7 @@ admin.site.register(corpus.models.Corpus)
 admin.site.register(corpus.models.TranslatedDocument)
 admin.site.register(corpus.models.SourceSentence)
 admin.site.register(corpus.models.Translation)
+admin.site.register(corpus.models.Domain)
 
 admin.site.register(corpus.models.TranslationSystem)
 admin.site.register(corpus.models.MonoAnalysisSystem)

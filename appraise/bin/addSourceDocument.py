@@ -13,13 +13,12 @@ optionParser.add_option("-i", "--id", dest="id", help="id of the document (if no
                   metavar="ID")
 optionParser.add_option("-u", "--unique-sentence-id", help="create a (hopefully) unique sentence id for each sentence in the corpus", dest="uniqueSentenceId", action="store_true")
 optionParser.add_option("-C", "--no-corpus", dest="noCorpus", help="do not create a corpus for this document", action="store_true")
-optionParser.add_option("--campaign", dest="campaign", help="evaluation campaign for this document", metavar="ID")
 (options, args) = optionParser.parse_args()
 
 if len(args) == 0:
     optionParser.error("You have to give a file to import data from")
 if len(args) > 1:
-    optionParser.error("Importing more than one corpus at a time is not supported yet")
+    optionParser.error("Importing more than one document at a time is not supported yet")
 if not options.language:
     optionParser.error("No language given")
 if not options.id:
@@ -28,32 +27,22 @@ if not options.id:
 log = sys.stdout
 
 try:
-    language = models.Language.objects.get(id=options.language)
+    language = models.Language.objects.get(name=options.language)
 except models.Language.DoesNotExist:
     sys.stderr.write("Error: language \"%s\" not found in the database!\n" % options.language)
     sys.exit(1)
 
-if models.SourceDocument.objects.filter(customId=options.id, language=language):
+if models.SourceDocument.objects.filter(custom_id=options.id, language=language):
     sys.stderr.write("Error: document \"%s\" (%s) already exists in the database!\n"
-                     % (options.id, language.humanReadable))
+                     % (options.id, language.english_name))
     sys.exit(1)
 
 fp = open(args[0])
 
 # Document creation
-log.write("Importing corpus \"%s\" from %s (language: %s)...\n" % (options.id, args[0], language.humanReadable))
-d = models.SourceDocument(customId=options.id, language=language)
+log.write("Importing corpus \"%s\" from %s (language: %s)...\n" % (options.id, args[0], language.english_name))
+d = models.SourceDocument(custom_id=options.id, language=language)
 d.save()
-campaign = None
-if options.campaign:
-    try:
-        campaign = models.EvaluationCampaign.objects.get(id=options.campaign)
-        d.campaigns.add(campaign)
-        d.save()
-    except models.EvaluationCampaign.DoesNotExist:
-        sys.stderr.write("Error: Campaign \"%s\" not found\n" % options.campaign)
-        d.delete()
-        sys.exit(1)
 
 # Adding the sentences
 for (n, l) in enumerate(fp):
@@ -61,23 +50,17 @@ for (n, l) in enumerate(fp):
     s = models.SourceSentence(text=l.strip())
     s.document = d
     if not options.uniqueSentenceId:
-        s.customId = "%d" % (n+1)
+        s.custom_id = "%d" % (n+1)
     else:
-        if campaign:
-            s.customId = "%s__%s__%d" % (campaign.id, d.customId, (n+1))
-        else:
-            s.customId = "%s__%d" % (d.customId, (n+1))
+        s.custom_id = "%s__%d" % (d.custom_id, (n+1))
     s.save()
 d.save()
-log.write("Document \"%s\" stored in database with %d sentences.\n" % (d.customId, len(d.sentence_set.all())))
+log.write("Document \"%s\" stored in database with %d sentences.\n" % (d.custom_id, len(d.sentence_set.all())))
 
 # Corpus creation
 if not options.noCorpus:
-    c = models.Corpus(customId=options.id, language=language)
+    c = models.Corpus(custom_id=options.id, language=language)
     c.save()
-    if campaign:
-        c.campaigns.add(campaign)
-        c.save()
     c2d = models.Document2Corpus(document=d, corpus=c, order=0)
     c2d.save()
     log.write("Created corpus \"%s\" with this document.\n" % options.id)

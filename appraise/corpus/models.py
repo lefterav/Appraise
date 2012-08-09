@@ -165,9 +165,9 @@ class SourceDocument(Document):
                                  max_length = 200,
                                  help_text="This field should serve for entering a user defined sentence id"
                                  )
-    domain = models.ForeignKey(Domain)
-    document_class = models.ForeignKey(DocumentClass)
-    document_subclass = models.ForeignKey(DocumentSubclass)
+    domain = models.ForeignKey(Domain, null=True)
+    document_class = models.ForeignKey(DocumentClass, null=True)
+    document_subclass = models.ForeignKey(DocumentSubclass, null=True)
 
     def __unicode__(self):
         return "%s (%s)" % (self.custom_id, self.language.name)

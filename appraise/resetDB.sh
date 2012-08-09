@@ -5,9 +5,9 @@ export ESMT_CAMPAIGN=testing
 python2 manage.py reset corpus --noinput
 python2 manage.py reset evaluation --noinput
 python2 manage.py syncdb
-./esmt add language -i ES -l Spanish
-./esmt add language -i DE -l German
-./esmt add campaign testing
+./esmt add language -i ES -l Spanish -n Español
+./esmt add language -i DE -l German -n Deutsch
+#./esmt add campaign testing
 ./esmt add document test/source-ES -l ES -u
 ./esmt add document test/source-ES-2 -l ES -u
 ./esmt add document test/source-DE -l DE -u

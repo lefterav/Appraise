@@ -104,9 +104,9 @@ function add() {
     else
 	shift
 	campaignArg=""
-	if $needsCampaign; then
-	    setCampaignArg
-	fi
+	#if $needsCampaign; then
+	#    setCampaignArg
+	#fi
 	ESMT_PROG_NAME="$progname add $1" $bindir/$command $campaignArg "$@"
     fi
 }
