@@ -347,8 +347,8 @@ class EvaluationItem(models.Model):
             for s in systems:
                 sourceDocument = self.source_sentence.document
                 translatedDocument = corpusM.TranslatedDocument.objects.get(source=sourceDocument,
-                                                                           system=s,
-                                                                           language=self.task.targetLanguage)
+                                                                            translation_system=s,
+                                                                            language=self.task.targetLanguage)
                 translation = corpusM.Translation.objects.get(source_sentence=self.source_sentence,
                                                              document=translatedDocument)
                 self.translations.append((translation.text, []))

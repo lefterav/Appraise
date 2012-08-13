@@ -179,6 +179,10 @@ class TranslatedDocument(Document):
         @note: replaced Project
     """
     source = models.ForeignKey(SourceDocument)
+    translation_system = models.ForeignKey(
+        TranslationSystem,
+        help_text = "Choose the translation system that produced this sentence"
+    )
     status = models.ForeignKey(Status, null=True)
 
     def __unicode__(self):
@@ -240,10 +244,6 @@ class Translation(Sentence):
         @note: replaced Content
     """
     source_sentence = models.ForeignKey(SourceSentence)
-    translation_system = models.ForeignKey(
-        TranslationSystem,
-        help_text = "Choose the translation system that produced this sentence"
-    )
 
     def __unicode__(self):
         return "%s - %s" % (self.source_sentence, self.document.language.name)

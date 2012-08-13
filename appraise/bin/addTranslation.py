@@ -56,12 +56,12 @@ fp = open(args[0])
 document2corpuses = models.Document2Corpus.objects.filter(corpus=corpus)
 for d2c in document2corpuses:
     sourceDocument = d2c.document
-    translatedDocument = models.TranslatedDocument(source=sourceDocument,language=language)
+    translatedDocument = models.TranslatedDocument(source=sourceDocument, translation_system=system, language=language)
     if campaign:
         translatedDocument.campaign = campaign
     translatedDocument.save()
     sentences = models.SourceSentence.objects.filter(document = d2c.document)
     for s in sentences:
         l = fp.readline().strip()
-        translation = models.Translation(source_sentence=s, translation_system=system, text=l, document=translatedDocument)
+        translation = models.Translation(source_sentence=s, text=l, document=translatedDocument)
         translation.save()

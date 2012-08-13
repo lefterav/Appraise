@@ -124,7 +124,7 @@ INSTALLED_APPS = (
     
     #'appraise.evaluation',
     'corpus',
-    'eval',
+    'evaluation',
     'selection',
     'django_extensions'
 )
