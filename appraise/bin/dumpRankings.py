@@ -27,6 +27,8 @@ for r in rankings:
 
     fields.append(sourceSentence.custom_id)
 
+    fields.append(r.user.username)
+
     if r.skipped:
         fields.append("__SKIPPED__")
     else:
