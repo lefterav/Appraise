@@ -14,7 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template import RequestContext
 
 from appraise.evaluation.models import APPRAISE_TASK_TYPE_CHOICES, \
-  EvaluationTask, EvaluationItem, EvaluationResult
+  EvaluationTask, EvaluationItem, EvaluationResult, RankingResult, _RankingRank
 from appraise.settings import LOG_LEVEL, LOG_HANDLER, COMMIT_TAG
 
 # Setup logging support.
@@ -161,7 +161,7 @@ def _handle_quality_checking(request, task, items):
       'source_text': source_text,
       'task_progress': '{0:03d}/{1:03d}'.format(finished_items, total_items),
       'title': 'Translation Quality Checking',
-      'translation': item.translations[0],
+      'translation': item.translations[0].text,
     }
     
     return render(request, 'evaluation/quality_checking.html', dictionary)
@@ -208,22 +208,33 @@ def _handle_ranking(request, task, items):
         for index in range(len(current_item.translations)):
             rank = request.POST.get('rank_{0}'.format(index), -1)
             ranks[order[index]] = int(rank)
-        print ranks
+
+        result = RankingResult(item=current_item, user=request.user)
+        result.save() # get an object id
         
         # If "Flag Error" was clicked, _raw_result is set to "SKIPPED".
         if submit_button == 'FLAG_ERROR':
             _raw_result = 'SKIPPED'
+            result.skipped = True
         
         # Otherwise, the _raw_result is a comma-separated list of ranks.
         elif submit_button == 'SUBMIT':
             _raw_result = range(len(current_item.translations))
             _raw_result = ','.join([str(ranks[x]) for x in _raw_result])
+            
+            #for (i, t) in enumerate(current_item.translations):
+            #    print t.translation_system.name
+                
 
             print _raw_result
             systems = current_item.task.systems.all()
-            for (n, s) in enumerate(systems):
-                print "{}. {} position {}".format(n, s.id, ranks[n])
-        
+            for (n, t) in enumerate(current_item.translations):
+                print "{}. {} position {}".format(n, t, ranks[n])
+                rank = _RankingRank(translation=t, rank=ranks[n])
+                rank.save()
+                result.results.add(rank)
+
+        result.save()
         
         # Save results for this item to the Django database.
         _save_results(current_item, request.user, duration, _raw_result)
@@ -247,7 +258,7 @@ def _handle_ranking(request, task, items):
     order = range(len(item.translations))
     shuffle(order)
     for index in order:
-        translations.append(item.translations[index])
+        translations.append((item.translations[index].text,))
     
     dictionary = {
       'action_url': request.path,

@@ -11,7 +11,7 @@ from django.template import Context
 from django.template.loader import get_template
 
 from appraise.evaluation.models import EvaluationTask, EvaluationItem, \
-  EvaluationResult
+  EvaluationResult, NewEvaluationResult
 
 
 def export_task_xml(modeladmin, request, queryset):
@@ -137,3 +137,4 @@ class EvaluationResultAdmin(admin.ModelAdmin):
 admin.site.register(EvaluationTask, EvaluationTaskAdmin)
 admin.site.register(EvaluationItem)
 admin.site.register(EvaluationResult, EvaluationResultAdmin)
+admin.site.register(NewEvaluationResult)

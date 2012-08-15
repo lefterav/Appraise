@@ -129,13 +129,15 @@ function add_help() {
 ################################################################################
 # Dump* functions
 
-dumpFuncNames=("document" "corpus" "EOL")
+dumpFuncNames=("document" "corpus" "rankings" "EOL")
 dumpHelp=(
 	 "dump a document from the database"
 	 "dump a corpus from the database"
+	 "dump ranking results"
 	)
 dumpCommands=("dumpDocument.py"
 	"dumpCorpus.py"
+	"dumpRankings.py"
 	)
 
 function dump() {

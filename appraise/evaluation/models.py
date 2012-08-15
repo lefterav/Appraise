@@ -350,8 +350,8 @@ class EvaluationItem(models.Model):
                                                                             translation_system=s,
                                                                             language=self.task.targetLanguage)
                 translation = corpusM.Translation.objects.get(source_sentence=self.source_sentence,
-                                                             document=translatedDocument)
-                self.translations.append((translation.text, []))
+                                                              document=translatedDocument)
+                self.translations.append(translation)
 
 
 class NewEvaluationResult(models.Model):
@@ -361,14 +361,15 @@ class NewEvaluationResult(models.Model):
     item = models.ForeignKey(EvaluationItem, db_index=True)
     user = models.ForeignKey(User, db_index=True)
     duration = models.TimeField(blank=True, null=True, editable=False)
+    skipped = models.BooleanField()
 
     class Meta:
         """
         Metadata options for the EvaluationResult object model.
         """
         ordering = ('id',)
-        verbose_name = "EvaluationResult object"
-        verbose_name_plural = "EvaluationResult objects"
+        verbose_name = "NewEvaluationResult object"
+        verbose_name_plural = "NewEvaluationResult objects"
 
     def readable_duration(self):
         """
@@ -382,10 +383,12 @@ class NewEvaluationResult(models.Model):
         """
         return u'<evaluation-result id="{0}">'.format(self.id)
 
-class RankingResult(NewEvaluationResult):
+class _RankingRank(models.Model):
     translation = models.ForeignKey(corpusM.Translation)
     rank = models.IntegerField()
     
+class RankingResult(NewEvaluationResult):
+    results = models.ManyToManyField(_RankingRank)
 
 class EvaluationResult(models.Model):
     """
