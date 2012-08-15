@@ -7,10 +7,28 @@ import sys
 import corpus.models as corpusM
 import evaluation.models as evalM
 
+order = [
+      "taskId"
+    , "taskName"
+    , "sourceDocument"
+    , "sourceSentence"
+    , "user"
+    , "rankings"
+]
+
 optionParser = optparse.OptionParser(usage="%s <options>" % os.environ["ESMT_PROG_NAME"], add_help_option=False)
-optionParser.add_option("-s", "--separator", help="Separator for fields (default: tab)",
+optionParser.add_option("-H", "--header", help="Show header", action="store_true", dest="showHeader")
+optionParser.add_option("-d", "--delimiter", help="Delimiter for fields (default: tab)",
                         metavar="SEP", default="\t")
 (options, args) = optionParser.parse_args()
+
+out = sys.stdout
+
+if options.showHeader:
+    string = options.delimiter.join(order)
+    out.write("%s\n" % string)
+    out.write("%s\n" % ("-" * len(string.expandtabs())))
+    sys.exit(0)
 
 rankings = evalM.RankingResult.objects.all()
 for r in rankings:
@@ -36,5 +54,5 @@ for r in rankings:
             system = corpusM.TranslatedDocument.objects.get(id=rank.translation.document.id).translation_system
             fields.append(":".join([system.name, str(rank.rank)]))
     
-    print options.separator.join(fields)
+    out.write("%s\n" % options.delimiter.join(fields))
 
