@@ -16,7 +16,8 @@ order = [
     , "rankings"
 ]
 
-optionParser = optparse.OptionParser(usage="%s <options>" % os.environ["ESMT_PROG_NAME"], add_help_option=False)
+optionParser = optparse.OptionParser(usage="%s <options> [<queries>]" % os.environ["ESMT_PROG_NAME"], add_help_option=False)
+optionParser.add_option("-h", "--help", action="help", help=optparse.SUPPRESS_HELP)
 optionParser.add_option("-H", "--header", help="Show header", action="store_true", dest="showHeader")
 optionParser.add_option("-d", "--delimiter", help="Delimiter for fields (default: tab)",
                         metavar="SEP", default="\t")
@@ -30,7 +31,15 @@ if options.showHeader:
     out.write("%s\n" % ("-" * len(string.expandtabs())))
     sys.exit(0)
 
-rankings = evalM.RankingResult.objects.all()
+if len(args) == 0:
+    rankings = evalM.RankingResult.objects.all()
+else:
+    queries = {}
+    for a in args:
+        (key, value) = a.split("=")
+        queries[key] = value
+    rankings = evalM.RankingResult.objects.filter(**queries)
+    
 for r in rankings:
     evalItem = r.item
     evalTask = evalItem.task
