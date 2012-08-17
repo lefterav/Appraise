@@ -20,7 +20,16 @@ querySets = {
     , "users":User
 }
 
-optionParser = optparse.OptionParser(usage="%s <object> [queries]" % os.environ["ESMT_PROG_NAME"], add_help_option=False)
+class customHelpOptionParser(optparse.OptionParser):
+    def print_help(self):
+        optparse.OptionParser.print_help(self)
+        out = sys.stdout
+        out.write("\tNone at this time\n")
+        out.write("Recognized objects:\n")
+        out.write("\n".join(["\t%s" % q for q in querySets.keys()]))
+        out.write("\n")
+        
+optionParser = customHelpOptionParser(usage="%s <object> [queries]" % os.environ["ESMT_PROG_NAME"], add_help_option=False)
 optionParser.add_option("-h", "--help", action="help", help=optparse.SUPPRESS_HELP)
 (options, args) = optionParser.parse_args()
 
