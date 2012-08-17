@@ -111,6 +111,17 @@ function add_help() {
 }
 
 ################################################################################
+# List function
+
+function list() {
+    ESMT_PROG_NAME="$progname list" $bindir/list.py "$@"
+}
+
+function list_help() {
+    ESMT_PROG_NAME="$progname list" $bindir/list.py --help
+}
+
+################################################################################
 # Dump* functions
 
 dumpFuncNames=("document" "corpus" "rankings" "EOL")
@@ -129,8 +140,9 @@ function dump() {
     if [[ $? != 0 ]]; then
 	error "option '$1' not supported for 'dump'"
     else
+	element=$1
 	shift
-	ESMT_PROG_NAME="$progname dump $1" $bindir/$command "$@"
+	ESMT_PROG_NAME="$progname dump $element" $bindir/$command "$@"
     fi
 }
 
@@ -177,9 +189,10 @@ EOF
     fi
 }
 
-supportedCommands=("add" "dump" "start" "help" "EOL")
+supportedCommands=("add" "list" "dump" "start" "help" "EOL")
 helpForCommands=(
                  "adds elements to the database"
+		 "lists elements in the database"
 		 "dumps elements from the database"
 		 "starts the evaluation server"
 		 "shows this help"

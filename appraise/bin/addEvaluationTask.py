@@ -12,7 +12,7 @@ validTaskTypes = ["QualityChecking", "Ranking", "Post-editing", "ErrorClassifica
 appraiseTaskNames = ["1", "2", "3", "4", "5"]
  
 
-optionParser = optparse.OptionParser(usage="%s -n <NAME> -t <TASKTYPE> -s <SYSTEMS> -l <LANGUAGE> -c <CORPUS> -u <USERS> [options] " % os.environ["ESMT_PROG_NAME"], add_help_option=False)
+optionParser = optparse.OptionParser(usage="%s [options] -n <NAME> -t <TASKTYPE> -s <SYSTEMS> -l <LANGUAGE> -c <CORPUS> -u <USERS>" % os.environ["ESMT_PROG_NAME"], add_help_option=False)
 optionParser.add_option("-h", "--help", action="help", help=optparse.SUPPRESS_HELP)
 optionParser.add_option("-n", "--name", dest="name", help="unique descriptive name for this evaluation task")
 optionParser.add_option("-t", "--task-type", dest="taskType", help="type choice for this evaluation task")

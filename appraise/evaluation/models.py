@@ -103,7 +103,6 @@ class EvaluationTask(models.Model):
       verbose_name="Random order?"
     )
 
-
     class Meta:
         """
         Metadata options for the EvaluationTask object model.
@@ -125,7 +124,8 @@ class EvaluationTask(models.Model):
         """
         Returns a Unicode String for this EvaluationTask object.
         """
-        return u'<evaluation-task id="{0}">'.format(self.id)
+        #return u'<evaluation-task id="{0}">'.format(self.id)
+        return '%s %s %s' % (self.task_id, self.task_name, self.get_task_type_display())
     
     @classmethod
     def _create_task_id(cls):
