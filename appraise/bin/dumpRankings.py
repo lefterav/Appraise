@@ -13,6 +13,7 @@ order = [
     , "sourceDocument"
     , "sourceSentence"
     , "user"
+    , "duration"
     , "rankings"
 ]
 
@@ -56,6 +57,8 @@ for r in rankings:
 
     fields.append(r.user.username)
 
+    fields.append('{}'.format(r.duration))
+
     if r.skipped:
         fields.append("__SKIPPED__")
     else:
@@ -64,4 +67,3 @@ for r in rankings:
             fields.append(":".join([system.name, str(rank.rank)]))
     
     out.write("%s\n" % options.delimiter.join(fields))
-

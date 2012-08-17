@@ -211,13 +211,13 @@ class EvaluationTask(models.Model):
         
         # Compute completion status for this task and the given user.
         _items = EvaluationItem.objects.filter(task=self).count()
-        _done = EvaluationResult.objects.filter(user=user,
+        _done = NewEvaluationResult.objects.filter(user=user,
           item__task=self).count()
         
         _status.append('{0}/{1}'.format(_done, _items))
         
         # Compute average duration for this task and the given users
-        _results = EvaluationResult.objects.filter(user=user, item__task=self)
+        _results = NewEvaluationResult.objects.filter(user=user, item__task=self)
         _durations = _results.values_list('duration', flat=True)
         
         _durations = [datetime_to_seconds(d) for d in _durations if d]
@@ -248,7 +248,7 @@ class EvaluationTask(models.Model):
         Returns True if this task is finished for the given user.
         """
         _items = EvaluationItem.objects.filter(task=self).count()
-        _done = EvaluationResult.objects.filter(user=user,
+        _done = NewEvaluationResult.objects.filter(user=user,
           item__task=self).count()
         return _items == _done
     
@@ -257,7 +257,7 @@ class EvaluationTask(models.Model):
         Returns tuple (finished, total) number of items for the given user.
         """
         _items = EvaluationItem.objects.filter(task=self).count()
-        _done = EvaluationResult.objects.filter(user=user,
+        _done = NewEvaluationResult.objects.filter(user=user,
           item__task=self).count()
         return (_done, _items)
 

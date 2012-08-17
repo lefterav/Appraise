@@ -289,8 +289,3 @@ class FeatureValue(models.Model):
                                blank=True
                                )
 
-
-
-
-
-

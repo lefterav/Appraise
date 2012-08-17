@@ -14,7 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template import RequestContext
 
 from appraise.evaluation.models import APPRAISE_TASK_TYPE_CHOICES, \
-  EvaluationTask, EvaluationItem, EvaluationResult, RankingResult, _RankingRank
+  EvaluationTask, EvaluationItem, EvaluationResult, NewEvaluationResult, RankingResult, _RankingRank
 from appraise.settings import LOG_LEVEL, LOG_HANDLER, COMMIT_TAG
 
 # Setup logging support.
@@ -51,7 +51,7 @@ def _find_next_item_to_process(items, user, random_order=False):
     """
     Computes the next item the current user should process or None, if done.
     """
-    user_results = EvaluationResult.objects.filter(user=user)
+    user_results = NewEvaluationResult.objects.filter(user=user)
     
     processed_items = user_results.values_list('item__pk', flat=True)
     
@@ -234,6 +234,7 @@ def _handle_ranking(request, task, items):
                 rank.save()
                 result.results.add(rank)
 
+        result.duration = duration
         result.save()
         
         # Save results for this item to the Django database.
