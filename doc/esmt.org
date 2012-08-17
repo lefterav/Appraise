@@ -1,0 +1,50 @@
+* Principles
+  - Have command line access to most (all?) of the admin appraise functionality
+  - Only one entry point, the esmt command line utility (take git as
+    an example of the interaction model)
+  - Wide support for plain text formats (other formats, e.g. xml
+    optional, and added if needed)
+* Supported operations
+  - add
+    Adds elements to the database, after checking if all requirements are met
+  - list
+    Lists elements in the database. Only identifiers are listed, for
+    examining contents used dump. Supports [[queries]]
+  - dump
+    Dumps contents of elements in the database. E.g. with list you can
+    get a list of document ids, with dump you can output the
+    sentences. Some options (e.g. rankings support [[queries]])
+  - start
+    Starts the server (only local testing up to now)
+  - help
+    Shows help. Without arguments it lists the possible options. The
+    help can then be further refined, e.g. "esmt help add"
+* Example usage
+  This is an example script I use to test the implementation (file resetDB.sh)
+  
+  #+BEGIN_SRC bash
+    ./esmt add language -i ES -l Spanish -n Español
+    ./esmt add language -i DE -l German -n Deutsch
+    ./esmt add document test/source-ES -l ES -u                                                                                                                                                                                                   
+    ./esmt add document test/source-ES-2 -l ES -u
+    ./esmt add document test/source-DE -l DE -u
+    ./esmt add corpus -i corpus1 -l ES source-ES source-ES-2
+    ./esmt add system jane
+    ./esmt add system moses
+    ./esmt add system lucy
+    ./esmt add translation -i corpus1 -s jane test/translation-corpus1-jane -l DE
+    ./esmt add translation -i corpus1 -s moses test/translation-corpus1-moses -l DE
+    ./esmt add translation -i corpus1 -s lucy test/translation-corpus1-lucy -l DE
+    ./esmt add task -t ranking -c corpus1 -s jane,moses,lucy -n fromCmdLine -u david -l DE -R
+  #+END_SRC
+
+* <<Queries>>
+  In some tools queries are accepted in django format, e.g.
+
+  #+BEGIN_SRC bash
+    ./esmt list translatedDocuments translation_system__name=jane
+    ./esmt dump rankings item__source_sentence__custom_id=source-ES__2
+  #+END_SRC
+   
+  The structure of the database is not yet final, when it stabilizes
+  we can include a diagram of the tables.
