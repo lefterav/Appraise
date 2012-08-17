@@ -13,7 +13,7 @@
   - dump
     Dumps contents of elements in the database. E.g. with list you can
     get a list of document ids, with dump you can output the
-    sentences. Some options (e.g. rankings support [[queries]])
+    sentences. Some options (e.g. rankings) support [[queries]]
   - start
     Starts the server (only local testing up to now)
   - help
