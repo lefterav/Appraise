@@ -11,7 +11,6 @@ optionParser.add_option("-h", "--help", action="help", help=optparse.SUPPRESS_HE
 optionParser.add_option("-l", "--language", dest="language", help="target language (required)", metavar="LANG")
 optionParser.add_option("-i", "--id", dest="id", help="id of the source corpus", metavar="ID")
 optionParser.add_option("-s", "--system", dest="system", help="system id")
-optionParser.add_option("--campaign", dest="campaign", help="evaluation campaign for this document", metavar="ID")
 (options, args) = optionParser.parse_args()
 
 if len(args) == 0:
@@ -43,22 +42,12 @@ except models.TranslationSystem.DoesNotExist:
     sys.stderr.write("Error: system \"%s\" not found in the database!\n" % options.system)
     sys.exit(1)
     
-campaign = None
-if options.campaign:
-    try:
-        campaign = models.EvaluationCampaign.objects.get(id=options.campaign)
-    except models.EvaluationCampaign.DoesNotExist:
-        sys.stderr.write("Error: Campaign \"%s\" not found in the database!\n" % options.campaign)
-        sys.exit(1)
-
 log.write("Importing translations for \"%s\" from %s (language: %s)...\n" % (options.id, args[0], language.english_name))
 fp = open(args[0])
 document2corpuses = models.Document2Corpus.objects.filter(corpus=corpus)
 for d2c in document2corpuses:
     sourceDocument = d2c.document
     translatedDocument = models.TranslatedDocument(source=sourceDocument, translation_system=system, language=language)
-    if campaign:
-        translatedDocument.campaign = campaign
     translatedDocument.save()
     sentences = models.SourceSentence.objects.filter(document = d2c.document)
     for s in sentences:

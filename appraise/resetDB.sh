@@ -15,6 +15,6 @@ python2 manage.py syncdb
 ./esmt add system jane
 ./esmt add system moses
 ./esmt add system lucy
-./esmt add translation -i source-ES -s jane test/transJane-DE -l DE
-./esmt add translation -i source-ES -s moses test/transMoses-DE -l DE
-./esmt add translation -i source-ES -s lucy test/transLucy-DE -l DE
+./esmt add translation -i corpus1 -s jane test/translation-corpus1-jane -l DE
+./esmt add translation -i corpus1 -s moses test/translation-corpus1-moses -l DE
+./esmt add translation -i corpus1 -s lucy test/translation-corpus1-lucy -l DE
