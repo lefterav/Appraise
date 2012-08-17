@@ -17,6 +17,8 @@ from appraise.evaluation.models import APPRAISE_TASK_TYPE_CHOICES, \
   EvaluationTask, EvaluationItem, EvaluationResult, NewEvaluationResult, RankingResult, _RankingRank
 from appraise.settings import LOG_LEVEL, LOG_HANDLER, COMMIT_TAG
 
+import corpus.models as corpusM
+
 # Setup logging support.
 logging.basicConfig(level=LOG_LEVEL)
 LOGGER = logging.getLogger('appraise.evaluation.views')
@@ -76,22 +78,36 @@ def _compute_context_for_item(item):
     
     left_context = EvaluationItem.objects.filter(task=item.task, pk=item.id-1)
     right_context = EvaluationItem.objects.filter(task=item.task, pk=item.id+1)
-    
-    if left_context:
-        _left = left_context[0]
-        source_text[0] = _left.source[0]
-        if _left.reference:
-            reference_text[0] = _left.reference[0]
-    
+
+    sourceSentenceId = item.source_sentence.id
+    sourceDocument = item.source_sentence.document
+    try:
+        source_text[0] = corpusM.SourceSentence.objects.get(document=sourceDocument, id=sourceSentenceId-1).text
+    except corpusM.SourceSentence.DoesNotExist:
+        pass
+
     source_text[1] = item.source[0]
-    if item.reference:
-        reference_text[1] = item.reference[0]
+
+    try:
+        source_text[2] = corpusM.SourceSentence.objects.get(document=sourceDocument, id=sourceSentenceId+1).text
+    except corpusM.SourceSentence.DoesNotExist:
+        pass
     
-    if right_context:
-        _right = right_context[0]
-        source_text[2] = _right.source[0]
-        if _right.reference:
-            reference_text[2] = _right.reference[0]
+    #if left_context:
+    #    _left = left_context[0]
+    #    source_text[0] = _left.source[0]
+    #    if _left.reference:
+    #        reference_text[0] = _left.reference[0]
+    
+    #source_text[1] = item.source[0]
+    #if item.reference:
+    #    reference_text[1] = item.reference[0]
+    
+    #if right_context:
+    #    _right = right_context[0]
+    #    source_text[2] = _right.source[0]
+    #    if _right.reference:
+    #        reference_text[2] = _right.reference[0]
     
     return (source_text, reference_text)
 
