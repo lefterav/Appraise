@@ -246,15 +246,11 @@ def _handle_ranking(request, task, items):
 
             systems = current_item.task.systems.all()
             for (n, t) in enumerate(current_item.translations):
-                print "{}. {} position {}".format(n, t, ranks[n])
                 rank = _RankingRank(translation=t, rank=ranks[n])
                 rank.save()
                 result.results.add(rank)
 
         result.save()
-        
-        # Save results for this item to the Django database.
-        _save_results(current_item, request.user, duration, _raw_result)
     
     # Find next item the current user should process or return to overview.
     item = _find_next_item_to_process(items, request.user, task.random_order)
@@ -335,6 +331,9 @@ def _handle_postediting(request, task, items):
             if from_scratch:
                 result.fromScratch = True
             result.sentence = postedited
+            translation = current_item.translations[int(edit_id)]
+            translatedDocument = corpusM.TranslatedDocument.objects.get(id=translation.document.id)
+            result.system = translatedDocument.translation_system
             
             _results = []
             if from_scratch:
@@ -343,13 +342,12 @@ def _handle_postediting(request, task, items):
             _results.append(edit_id)
             _results.append(postedited)
             _raw_result = '\n'.join(_results)
+            print _raw_result
         
         elif submit_button == 'FLAG_ERROR':
             result.skipped = True
-            _raw_result = 'SKIPPED'
         
         result.save()
-        _save_results(current_item, request.user, duration, _raw_result)
     
     item = _find_next_item_to_process(items, request.user)
     if not item:

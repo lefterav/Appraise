@@ -393,6 +393,7 @@ class RankingResult(NewEvaluationResult):
 class PosteditingResult(NewEvaluationResult):
     sentence = models.TextField(null=True)
     fromScratch = models.BooleanField()
+    system = models.ForeignKey(corpusM.TranslationSystem, null=True)
 
 class EvaluationResult(models.Model):
     """

@@ -32,6 +32,8 @@ def formatPosteditingResult(r, fields):
         fields.append("fromScratch:YES")
     else:
         fields.append("fromScratch:NO")
+    #system = corpusM.TranslatedDocument.objects.get(id=r.system)
+    fields.append(r.system.name)
     fields.append(r.sentence)
 
 formatFunctions = {
