@@ -587,6 +587,10 @@ def task_handler(request, task_id):
     
     elif _task_type == '3-Way Ranking':
         return _handle_three_way_ranking(request, task, items)
+
+    elif _task_type == 'Post-edit-all':
+        return _handle_postediting(request, task, items)
+
     
     _msg = 'No handler for task type: "{0}"'.format(_task_type)
     raise NotImplementedError, _msg

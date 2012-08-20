@@ -8,8 +8,16 @@ import corpus.models as corpusM
 import evaluation.models as evalM
 from django.contrib.auth.models import User
 
-validTaskTypes = ["QualityChecking", "Ranking", "Post-editing", "ErrorClassification", "3-WayRanking"]
-appraiseTaskNames = ["1", "2", "3", "4", "5"]
+# Correspondence between names and "appraise ids"
+taskTypes = {"qualitychecking":"1",
+             "ranking":"2",
+             "post-editing":"3",
+             "errorclassification":"4",
+             "3-wayranking":"5",
+             "post-edit-all":"6"
+             
+}
+appraiseTaskNames = ["1", "2", "2", "3", "4", "5"]
  
 
 class customHelpOptionParser(optparse.OptionParser):
@@ -17,7 +25,7 @@ class customHelpOptionParser(optparse.OptionParser):
         optparse.OptionParser.print_help(self)
         out = sys.stdout
         out.write("\nFollowing task types are recognized:\n")
-        out.write("\n".join(["\t%s" % t for t in validTaskTypes]))
+        out.write("\n".join(["\t%s" % t for t in validTaskTypes.keys()]))
         out.write("\nNote that the types are case-insensitive\n")
 
 optionParser = customHelpOptionParser(usage="%s [options] -n <NAME> -t <TASKTYPE> -s <SYSTEMS> -l <LANGUAGE> -c <CORPUS> -u <USERS>" % os.environ["ESMT_PROG_NAME"], add_help_option=False)
@@ -40,10 +48,11 @@ if evalM.EvaluationTask.objects.filter(task_name=options.name).exists():
 
 if not options.taskType:
     optionParser.error("You have to provide a type for the task")
-posOfType = [n for n,t in enumerate([x.lower() for x in validTaskTypes]) if t == options.taskType.lower()]
-if not posOfType:
+try:
+    optTaskType = options.taskType.lower()
+    taskType = taskTypes[optTaskType]
+except KeyError:
     optionParser.error("Unknown task type \"%s\"" % options.taskType)
-taskType = appraiseTaskNames[posOfType[0]] # Note: posOfType is still a list
 
 if not options.systems:
     optionParser.error("You have to provide systems for this evaluation task")
@@ -107,3 +116,4 @@ for s in systems:
 for u in users:
     task.users.add(u)
 task.save()
+task.generateItems()

@@ -34,6 +34,7 @@ APPRAISE_TASK_TYPE_CHOICES = (
   ('3', 'Post-editing'),
   ('4', 'Error classification'),
   ('5', '3-Way Ranking'),
+  ('6', 'Post-edit-all')
 )
 
 class EvaluationTask(models.Model):
@@ -136,21 +137,24 @@ class EvaluationTask(models.Model):
         
         return new_id
     
-    def save(self, *args, **kwargs):
-        if not self.id:
-            self.full_clean()
-            
-            # We have to call save() here to get an id for this task.
-            super(EvaluationTask, self).save(*args, **kwargs)
-
-            documents = self.corpus.documents.all()
-            for d in documents:
-                sentences = corpusM.SourceSentence.objects.filter(document=d)
-                for s in sentences:
-                    i = EvaluationItem(task=self,source_sentence=s)
+    def generateItems(self, *args, **kwargs):
+        documents = self.corpus.documents.all()
+        for d in documents:
+            sentences = corpusM.SourceSentence.objects.filter(document=d)
+            for s in sentences:
+                if self.task_type == '6': # post-edit-all
+                    for system in self.systems.all():
+                        print "post-edit-all!"
+                        i = EvaluationItem(task=self, source_sentence=s)
+                        i.save()
+                        i.systems.add(system)
+                        i.save()
+                else:
+                    i = EvaluationItem(task=self, source_sentence=s)
                     i.save()
-            
-        super(EvaluationTask, self).save(*args, **kwargs)
+                    for system in self.systems.all():
+                        i.systems.add(system)
+                    i.save()
     
     def get_absolute_url(self):
         """
@@ -296,6 +300,11 @@ class EvaluationItem(models.Model):
     )
     
     source_sentence = models.ForeignKey(corpusM.SourceSentence)
+
+    # We "repeat" the systems here, because depending of the task
+    # type, it may be all of the task or only a subset (one?) of them
+    # (e.g. post-edit-all)
+    systems = models.ManyToManyField(corpusM.TranslationSystem)
     
     # These fields are derived from item_xml and NOT stored in the database.
     attributes = None
@@ -342,7 +351,7 @@ class EvaluationItem(models.Model):
             self.reference = None
 
             self.source = (self.source_sentence.text,[])
-            systems = self.task.systems.all()
+            systems = self.systems.all()
             self.translations = []
             for s in systems:
                 sourceDocument = self.source_sentence.document
