@@ -334,6 +334,7 @@ def _handle_postediting(request, task, items):
             translation = current_item.translations[int(edit_id)]
             translatedDocument = corpusM.TranslatedDocument.objects.get(id=translation.document.id)
             result.system = translatedDocument.translation_system
+            # Could we get here the system from the systems? Probably not...
             
             _results = []
             if from_scratch:
