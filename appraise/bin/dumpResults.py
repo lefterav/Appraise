@@ -42,8 +42,8 @@ formatFunctions = {
 optionParser = optparse.OptionParser(usage="%s <options> [<queries>]" % os.environ["ESMT_PROG_NAME"], add_help_option=False)
 optionParser.add_option("-h", "--help", action="help", help=optparse.SUPPRESS_HELP)
 optionParser.add_option("-H", "--header", help="Show header", action="store_true", dest="showHeader")
-optionParser.add_option("-d", "--delimiter", help="Delimiter for fields (default: tab)",
-                        metavar="SEP", default="\t")
+optionParser.add_option("-d", "--delimiter", help="Delimiter for fields (default: #)",
+                        metavar="SEP", default=" # ")
 (options, args) = optionParser.parse_args()
 
 out = sys.stdout
