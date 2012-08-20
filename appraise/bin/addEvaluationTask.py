@@ -12,12 +12,18 @@ validTaskTypes = ["QualityChecking", "Ranking", "Post-editing", "ErrorClassifica
 appraiseTaskNames = ["1", "2", "3", "4", "5"]
  
 
-optionParser = optparse.OptionParser(usage="%s [options] -n <NAME> -t <TASKTYPE> -s <SYSTEMS> -l <LANGUAGE> -c <CORPUS> -u <USERS>" % os.environ["ESMT_PROG_NAME"], add_help_option=False)
+class customHelpOptionParser(optparse.OptionParser):
+    def print_help(self):
+        optparse.OptionParser.print_help(self)
+        out = sys.stdout
+        out.write("\nFollowing task types are recognized:\n")
+        out.write("\n".join(["\t%s" % t for t in validTaskTypes]))
+        out.write("\nNote that the types are case-insensitive\n")
+
+optionParser = customHelpOptionParser(usage="%s [options] -n <NAME> -t <TASKTYPE> -s <SYSTEMS> -l <LANGUAGE> -c <CORPUS> -u <USERS>" % os.environ["ESMT_PROG_NAME"], add_help_option=False)
 optionParser.add_option("-h", "--help", action="help", help=optparse.SUPPRESS_HELP)
 optionParser.add_option("-n", "--name", dest="name", help="unique descriptive name for this evaluation task")
 optionParser.add_option("-t", "--task-type", dest="taskType", help="type choice for this evaluation task")
-optionParser.add_option("-T", "--list-task-types", dest="listTaskTypes", help="List the available task types",
-                        action="store_true")
 optionParser.add_option("-s", "--systems", dest="systems", help="comma separated list of systems in this evaluation task")
 optionParser.add_option("-l", "--language", dest="language", help="target language")
 optionParser.add_option("-c", "--corpus", dest="corpus", help="corpus to evaluate")
@@ -26,13 +32,6 @@ optionParser.add_option("-R", "--no-random", dest="random", help="do not use ran
 optionParser.add_option("-A", "--no-active", dest="active", help="do not activate the task", action="store_false", default=True)
 
 (options, args) = optionParser.parse_args()
-
-if options.listTaskTypes:
-    sys.stdout.write("Following task types are recognized:\n")
-    for t in validTaskTypes:
-        sys.stdout.write("\t%s\n" % t)
-    sys.stdout.write("\nNote that the types are case-insensitive\n")
-    sys.exit(0)
 
 if not options.name:
     optionParser.error("You have to provide a name for the task")
