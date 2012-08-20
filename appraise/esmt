@@ -124,15 +124,15 @@ function list_help() {
 ################################################################################
 # Dump* functions
 
-dumpFuncNames=("document" "corpus" "rankings" "EOL")
+dumpFuncNames=("document" "corpus" "results" "EOL")
 dumpHelp=(
 	 "dump a document from the database"
 	 "dump a corpus from the database"
-	 "dump ranking results"
+	 "dump task results"
 	)
 dumpCommands=("dumpDocument.py"
 	"dumpCorpus.py"
-	"dumpRankings.py"
+	"dumpResults.py"
 	)
 
 function dump() {

@@ -14,7 +14,9 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.template import RequestContext
 
 from appraise.evaluation.models import APPRAISE_TASK_TYPE_CHOICES, \
-  EvaluationTask, EvaluationItem, EvaluationResult, NewEvaluationResult, RankingResult, _RankingRank
+  EvaluationTask, EvaluationItem, EvaluationResult, NewEvaluationResult, \
+  RankingResult, _RankingRank, \
+  PosteditingResult
 from appraise.settings import LOG_LEVEL, LOG_HANDLER, COMMIT_TAG
 
 import corpus.models as corpusM
@@ -225,7 +227,7 @@ def _handle_ranking(request, task, items):
             rank = request.POST.get('rank_{0}'.format(index), -1)
             ranks[order[index]] = int(rank)
 
-        result = RankingResult(item=current_item, user=request.user)
+        result = RankingResult(item=current_item, user=request.user, duration=duration)
         result.save() # get an object id
         
         # If "Flag Error" was clicked, _raw_result is set to "SKIPPED".
@@ -242,7 +244,6 @@ def _handle_ranking(request, task, items):
             #    print t.translation_system.name
                 
 
-            print _raw_result
             systems = current_item.task.systems.all()
             for (n, t) in enumerate(current_item.translations):
                 print "{}. {} position {}".format(n, t, ranks[n])
@@ -250,7 +251,6 @@ def _handle_ranking(request, task, items):
                 rank.save()
                 result.results.add(rank)
 
-        result.duration = duration
         result.save()
         
         # Save results for this item to the Django database.
@@ -330,7 +330,12 @@ def _handle_postediting(request, task, items):
         print request.POST
         print
         
+        result = PosteditingResult(item=current_item, user=request.user, duration=duration)
         if submit_button == 'SUBMIT':
+            if from_scratch:
+                result.fromScratch = True
+            result.sentence = postedited
+            
             _results = []
             if from_scratch:
                 _results.append('FROM_SCRATCH')
@@ -340,8 +345,10 @@ def _handle_postediting(request, task, items):
             _raw_result = '\n'.join(_results)
         
         elif submit_button == 'FLAG_ERROR':
+            result.skipped = True
             _raw_result = 'SKIPPED'
         
+        result.save()
         _save_results(current_item, request.user, duration, _raw_result)
     
     item = _find_next_item_to_process(items, request.user)
@@ -353,7 +360,7 @@ def _handle_postediting(request, task, items):
     
     dictionary = {'title': 'Post-editing', 'item_id': item.id,
       'source_text': source_text, 'reference_text': reference_text,
-      'translations': item.translations,
+      'translations': [(t.text,) for t in item.translations],
       'description': task.description,
       'task_progress': '{0:03d}/{1:03d}'.format(_finished+1, _total),
       'action_url': request.path, 'commit_tag': COMMIT_TAG}

@@ -14,8 +14,30 @@ order = [
     , "sourceSentence"
     , "user"
     , "duration"
-    , "rankings"
+    , "results"
 ]
+
+baseQueryObjects = {
+      "ranking":evalM.RankingResult
+    , "post-editing":evalM.PosteditingResult
+}
+
+def formatRankingResult(r, fields):
+    for rank in r.results.all():
+        system = corpusM.TranslatedDocument.objects.get(id=rank.translation.document.id).translation_system
+        fields.append(":".join([system.name, str(rank.rank)]))
+
+def formatPosteditingResult(r, fields):
+    if r.fromScratch:
+        fields.append("fromScratch:YES")
+    else:
+        fields.append("fromScratch:NO")
+    fields.append(r.sentence)
+
+formatFunctions = {
+      "ranking":formatRankingResult
+    , "post-editing":formatPosteditingResult
+}
 
 optionParser = optparse.OptionParser(usage="%s <options> [<queries>]" % os.environ["ESMT_PROG_NAME"], add_help_option=False)
 optionParser.add_option("-h", "--help", action="help", help=optparse.SUPPRESS_HELP)
@@ -33,15 +55,22 @@ if options.showHeader:
     sys.exit(0)
 
 if len(args) == 0:
-    rankings = evalM.RankingResult.objects.all()
+    optionParser.error("You have to specify which kind of task")
+
+taskType = args[0].lower()
+if taskType not in baseQueryObjects.keys():
+    optionParser.error("Task type \"%s\" not recognized" % args[0])
+
+if len(args) == 1:
+    results = baseQueryObjects[taskType].objects.all()
 else:
     queries = {}
     for a in args:
         (key, value) = a.split("=")
         queries[key] = value
-    rankings = evalM.RankingResult.objects.filter(**queries)
+    results = baseQueryObjects.objects.filter(**queries)
     
-for r in rankings:
+for r in results:
     evalItem = r.item
     evalTask = evalItem.task
     sourceSentence = evalItem.source_sentence
@@ -50,20 +79,18 @@ for r in rankings:
 
     fields.append(evalTask.task_id)
     fields.append(evalTask.task_name)
-
+    
     fields.append(sourceDocument.custom_id)
-
+    
     fields.append(sourceSentence.custom_id)
-
+    
     fields.append(r.user.username)
-
+    
     fields.append('{}'.format(r.duration))
-
+    
     if r.skipped:
         fields.append("__SKIPPED__")
     else:
-        for rank in r.results.all():
-            system = corpusM.TranslatedDocument.objects.get(id=rank.translation.document.id).translation_system
-            fields.append(":".join([system.name, str(rank.rank)]))
+        formatFunctions[taskType](r, fields)
     
     out.write("%s\n" % options.delimiter.join(fields))

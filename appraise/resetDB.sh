@@ -17,3 +17,4 @@ python2 manage.py syncdb
 ./esmt add translation -i corpus1 -s moses test/translation-corpus1-moses -l DE
 ./esmt add translation -i corpus1 -s lucy test/translation-corpus1-lucy -l DE
 ./esmt add task -t ranking -c corpus1 -s jane,moses,lucy -n fromCmdLine -u david -l DE -R
+./esmt add task -n post-edit -t post-editing -s jane,moses,lucy -l DE -c corpus1 -u david

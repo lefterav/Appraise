@@ -390,6 +390,10 @@ class _RankingRank(models.Model):
 class RankingResult(NewEvaluationResult):
     results = models.ManyToManyField(_RankingRank)
 
+class PosteditingResult(NewEvaluationResult):
+    sentence = models.TextField(null=True)
+    fromScratch = models.BooleanField()
+
 class EvaluationResult(models.Model):
     """
     Evaluation Result object model.
