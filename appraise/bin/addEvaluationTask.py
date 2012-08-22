@@ -11,7 +11,7 @@ from django.contrib.auth.models import User
 # Correspondence between names and "appraise ids"
 taskTypes = {"qualitychecking":"1",
              "ranking":"2",
-             "post-editing":"3",
+             "select-and-post-edit":"3",
              "errorclassification":"4",
              "3-wayranking":"5",
              "post-edit-all":"6"
@@ -117,3 +117,6 @@ for u in users:
     task.users.add(u)
 task.save()
 task.generateItems()
+
+nItems = evalM.EvaluationItem.objects.filter(task=task).count()
+print "Task \"%s\" (type: %s) generated with %d items" % (task.task_name, options.taskType, nItems)

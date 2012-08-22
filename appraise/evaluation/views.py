@@ -16,7 +16,7 @@ from django.template import RequestContext
 from appraise.evaluation.models import APPRAISE_TASK_TYPE_CHOICES, \
   EvaluationTask, EvaluationItem, EvaluationResult, NewEvaluationResult, \
   RankingResult, _RankingRank, \
-  PosteditingResult
+  SelectAndPostEditResult, PostEditAllResult
 from appraise.settings import LOG_LEVEL, LOG_HANDLER, COMMIT_TAG
 
 import corpus.models as corpusM
@@ -326,7 +326,10 @@ def _handle_postediting(request, task, items):
         print request.POST
         print
         
-        result = PosteditingResult(item=current_item, user=request.user, duration=duration)
+        if current_item.task.task_type == "6":
+            result = PostEditAllResult(item=current_item, user=request.user, duration=duration)
+        else:
+            result = SelectAndPostEditResult(item=current_item, user=request.user, duration=duration)
         if submit_button == 'SUBMIT':
             if from_scratch:
                 result.fromScratch = True
@@ -580,7 +583,7 @@ def task_handler(request, task_id):
     elif _task_type == 'Ranking':
         return _handle_ranking(request, task, items)
     
-    elif _task_type == 'Post-editing':
+    elif _task_type == 'Select-and-post-edit':
         return _handle_postediting(request, task, items)
     
     elif _task_type == 'Error classification':

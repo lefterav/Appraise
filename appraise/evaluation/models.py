@@ -31,7 +31,7 @@ LOGGER.addHandler(LOG_HANDLER)
 APPRAISE_TASK_TYPE_CHOICES = (
   ('1', 'Quality Checking'),
   ('2', 'Ranking'),
-  ('3', 'Post-editing'),
+  ('3', 'Select-and-post-edit'),
   ('4', 'Error classification'),
   ('5', '3-Way Ranking'),
   ('6', 'Post-edit-all')
@@ -141,15 +141,15 @@ class EvaluationTask(models.Model):
         documents = self.corpus.documents.all()
         for d in documents:
             sentences = corpusM.SourceSentence.objects.filter(document=d)
-            for s in sentences:
-                if self.task_type == '6': # post-edit-all
-                    for system in self.systems.all():
-                        print "post-edit-all!"
+            if self.task_type == '6': # post-edit-all
+                for system in self.systems.all():
+                    for s in sentences:
                         i = EvaluationItem(task=self, source_sentence=s)
                         i.save()
                         i.systems.add(system)
                         i.save()
-                else:
+            else:
+                for s in sentences:
                     i = EvaluationItem(task=self, source_sentence=s)
                     i.save()
                     for system in self.systems.all():
@@ -399,7 +399,12 @@ class _RankingRank(models.Model):
 class RankingResult(NewEvaluationResult):
     results = models.ManyToManyField(_RankingRank)
 
-class PosteditingResult(NewEvaluationResult):
+class PostEditAllResult(NewEvaluationResult):
+    sentence = models.TextField(null=True)
+    fromScratch = models.BooleanField()
+    system = models.ForeignKey(corpusM.TranslationSystem, null=True)
+
+class SelectAndPostEditResult(NewEvaluationResult):
     sentence = models.TextField(null=True)
     fromScratch = models.BooleanField()
     system = models.ForeignKey(corpusM.TranslationSystem, null=True)

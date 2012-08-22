@@ -19,7 +19,8 @@ order = [
 
 baseQueryObjects = {
       "ranking":evalM.RankingResult
-    , "post-editing":evalM.PosteditingResult
+    , "select-and-post-edit":evalM.SelectAndPostEditResult
+    , "post-edit-all":evalM.PostEditAllResult
 }
 
 def formatRankingResult(r, fields):
@@ -37,7 +38,8 @@ def formatPosteditingResult(r, fields):
 
 formatFunctions = {
       "ranking":formatRankingResult
-    , "post-editing":formatPosteditingResult
+    , "post-edit-all":formatPosteditingResult
+    , "select-and-post-edit":formatPosteditingResult
 }
 
 optionParser = optparse.OptionParser(usage="%s <options> [<queries>]" % os.environ["ESMT_PROG_NAME"], add_help_option=False)
