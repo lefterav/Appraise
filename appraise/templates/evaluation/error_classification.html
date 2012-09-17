@@ -10,8 +10,7 @@
 <script src="/appraise/site_media/jquery-1.7.1.min.js"></script>
 <script>
 <!--
-var ERROR_CLASSES = ["terminology", "lexical_choice", "syntax", "insertion",
-  "morphology", "misspelling", "punctuation", "other"];
+var ERROR_CLASSES = {{error_classes|safe}};
 
 $(document).ready(function() {
   for (var i=0; i<{{words|length}}; i++)
@@ -25,7 +24,7 @@ $(document).ready(function() {
 function update_error_summary()
 {
   var _errors = new Array();
-  for (var i=0; i<ERROR_CLASSES.length; i++) {
+  for (var i=0; i<{{error_classes|length}}; i++) {
     _total_errors_of_this_class = 0;
     for (var j=0; j<{{words|length}}; j++) {
       var _error = $('input[name="'+ERROR_CLASSES[i]+'_'+j+'"]:checked').val();

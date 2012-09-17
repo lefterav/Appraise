@@ -25,7 +25,7 @@ class customHelpOptionParser(optparse.OptionParser):
         optparse.OptionParser.print_help(self)
         out = sys.stdout
         out.write("\nFollowing task types are recognized:\n")
-        out.write("\n".join(["\t%s" % t for t in validTaskTypes.keys()]))
+        out.write("\n".join(["\t%s" % t for t in taskTypes.keys()]))
         out.write("\nNote that the types are case-insensitive\n")
 
 optionParser = customHelpOptionParser(usage="%s [options] -n <NAME> -t <TASKTYPE> -s <SYSTEMS> -l <LANGUAGE> -c <CORPUS> -u <USERS>" % os.environ["ESMT_PROG_NAME"], add_help_option=False)

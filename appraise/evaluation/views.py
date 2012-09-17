@@ -27,8 +27,9 @@ LOGGER = logging.getLogger('appraise.evaluation.views')
 LOGGER.addHandler(LOG_HANDLER)
 
 
-ERROR_CLASSES = ("terminology", "lexical_choice", "syntax", "insertion",
-  "morphology", "misspelling", "punctuation", "other")
+ERROR_CLASSES = ["terminology", "lexical choice", "syntax", "insertion",
+  "morphology", "misspelling", "punctuation", "other"]
+#ERROR_CLASSES = ["aaa", "bbb", "ccc"];
 
 
 def _save_results(item, user, duration, raw_result):
@@ -78,8 +79,8 @@ def _compute_context_for_item(item):
     source_text = [None, None, None]
     reference_text = [None, None, None]
     
-    left_context = EvaluationItem.objects.filter(task=item.task, pk=item.id-1)
-    right_context = EvaluationItem.objects.filter(task=item.task, pk=item.id+1)
+    #left_context = EvaluationItem.objects.filter(task=item.task, pk=item.id-1)
+    #right_context = EvaluationItem.objects.filter(task=item.task, pk=item.id+1)
 
     sourceSentenceId = item.source_sentence.id
     sourceDocument = item.source_sentence.document
@@ -444,13 +445,14 @@ def _handle_error_classification(request, task, items):
     source_text, reference_text = _compute_context_for_item(item)
     _finished, _total = task.get_finished_for_user(request.user)
     
-    translation = item.translations[0][0]
-    words = item.translations[0][0].split(' ')
+    translation = item.translations[0].text
+    words = translation.split(' ')
     dictionary = {'title': 'Error Classification', 'item_id': item.id,
       'source_text': source_text, 'reference_text': reference_text,
       'translation': translation,
       'words': words,
       'description': task.description,
+      'error_classes': ERROR_CLASSES,
       'task_progress': '{0:03d}/{1:03d}'.format(_finished+1, _total),
       'action_url': request.path, 'commit_tag': COMMIT_TAG}
     

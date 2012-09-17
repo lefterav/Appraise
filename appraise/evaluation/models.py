@@ -40,7 +40,7 @@ APPRAISE_TASK_TYPE_CHOICES = (
 class EvaluationTask(models.Model):
     """
     Evaluation Task object model.
-    """
+:   """
     task_id = models.CharField(
       max_length=32,
       db_index=True,
@@ -408,6 +408,19 @@ class SelectAndPostEditResult(NewEvaluationResult):
     sentence = models.TextField(null=True)
     fromScratch = models.BooleanField()
     system = models.ForeignKey(corpusM.TranslationSystem, null=True)
+
+class ErrorClassificationResult(NewEvaluationResult):
+    tooManyErrors = models.BooleanField()
+    missingWords = models.BooleanField()
+
+class ErrorClassificationType(models.Model):
+    name = models.CharField(max_length=100)
+
+class _ErrorClassificationEntry(models.Model):
+    type = models.ForeignKey(ErrorClassificationType)
+    isSevere = models.BooleanField()
+    wordPosition = models.IntegerField()
+    result = models.ForeignKey(ErrorClassificationResult)
 
 class EvaluationResult(models.Model):
     """
