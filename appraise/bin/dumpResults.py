@@ -21,6 +21,7 @@ baseQueryObjects = {
       "ranking":evalM.RankingResult
     , "select-and-post-edit":evalM.SelectAndPostEditResult
     , "post-edit-all":evalM.PostEditAllResult
+    , "error-classification":evalM.ErrorClassificationResult
 }
 
 def formatRankingResult(r, fields):
@@ -36,10 +37,29 @@ def formatPosteditingResult(r, fields):
     fields.append(r.system.name)
     fields.append(r.sentence)
 
+def formatErrorClassificationResult(r, fields):
+    if r.tooManyErrors:
+        fields.append("TooManyErrors")
+        return
+    if r.missingWords:
+        fields.append("MissingWords:YES")
+    else:
+        fields.append("MissingWords:NO")
+    wordErrors = []
+    entries = evalM._ErrorClassificationEntry.objects.filter(result=r)
+    for e in entries:
+        if e.isSevere:
+            severe = "SEVERE"
+        else:
+            severe = "MINOR"
+        wordErrors.append("%d:%s:%s" % (e.wordPosition+1, e.type.name, severe))
+    fields.append(" ".join(wordErrors))
+
 formatFunctions = {
       "ranking":formatRankingResult
     , "post-edit-all":formatPosteditingResult
     , "select-and-post-edit":formatPosteditingResult
+    , "error-classification":formatErrorClassificationResult
 }
 
 optionParser = optparse.OptionParser(usage="%s <options> [<queries>]" % os.environ["ESMT_PROG_NAME"], add_help_option=False)
