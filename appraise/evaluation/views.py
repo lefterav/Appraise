@@ -16,7 +16,8 @@ from django.template import RequestContext
 from appraise.evaluation.models import APPRAISE_TASK_TYPE_CHOICES, \
   EvaluationTask, EvaluationItem, EvaluationResult, NewEvaluationResult, \
   RankingResult, _RankingRank, \
-  SelectAndPostEditResult, PostEditAllResult
+  SelectAndPostEditResult, PostEditAllResult, \
+  ErrorClassificationResult, _ErrorClassificationEntry, ErrorClassificationType
 from appraise.settings import LOG_LEVEL, LOG_HANDLER, COMMIT_TAG
 
 import corpus.models as corpusM
@@ -372,7 +373,7 @@ def _handle_postediting(request, task, items):
 
 
 @login_required
-def _handle_error_classification(request, task, items):
+def _handle_error_classification(request, taskIn, items):
     """
     Handler for Error Classification tasks.
     
@@ -380,7 +381,9 @@ def _handle_error_classification(request, task, items):
     and creates an EvaluationResult instance on HTTP POST submission.
     
     """
+    task = taskIn.errorclassificationtask
     if request.method == "POST":
+        # downcast the task to the concrete type
         end_timestamp = request.POST.get('start_timestamp', None)
         item_id = request.POST.get('item_id')
         words = request.POST.get('words')
@@ -402,7 +405,8 @@ def _handle_error_classification(request, task, items):
         if words:
             for index in range(int(words)):
                 _errors = {}
-                for error in ERROR_CLASSES:
+                taskErrors = [str(e.name) for e in task.errorTypes.all()]
+                for error in taskErrors:
                     severity = request.POST.get('{0}_{1}'.format(error, index))
                     if severity and severity != "NONE":
                         _errors[error] = severity
@@ -417,26 +421,24 @@ def _handle_error_classification(request, task, items):
         print "errors: {0}".format(errors)
         print
         
+        result = ErrorClassificationResult(item=current_item, user=request.user, duration=duration,
+                                           missingWords=(missing_words!=None),
+                                           tooManyErrors=(too_many_errors!=None))
+        result.save()
         if submit_button == 'SUBMIT':
-            if too_many_errors:
-                _raw_result = 'TOO_MANY_ERRORS'
             
-            else:
-                _errors = []
-                
-                if missing_words:
-                    _errors.append('MISSING_WORDS')
-                
-                for index, data in errors.items():
-                    _word_i = ['{}:{}'.format(k, v) for k, v in data.items()]
-                    _errors.append('{}={}'.format(index, ','.join(_word_i)))
-                
-                _raw_result = '\n'.join(_errors)
-        
+            if not too_many_errors:
+                for (wordIndex, wordErrors) in errors.items():
+                    for (e, severity) in wordErrors.items():
+                        errorType = ErrorClassificationType.objects.get(name=e)
+                        isSevere = (severity == "SEVERE")
+                        entry = _ErrorClassificationEntry(type=errorType, isSevere=isSevere,
+                                                          wordPosition=wordIndex, result = result)
+                        entry.save()
+            
         elif submit_button == 'FLAG_ERROR':
-            _raw_result = 'SKIPPED'
-        
-        _save_results(current_item, request.user, duration, _raw_result)
+            result.skipped = True
+            result.save()
     
     item = _find_next_item_to_process(items, request.user)
     if not item:
@@ -452,7 +454,7 @@ def _handle_error_classification(request, task, items):
       'translation': translation,
       'words': words,
       'description': task.description,
-      'error_classes': ERROR_CLASSES,
+      'error_classes': [str(e.name) for e in task.errorTypes.all()],
       'task_progress': '{0:03d}/{1:03d}'.format(_finished+1, _total),
       'action_url': request.path, 'commit_tag': COMMIT_TAG}
     

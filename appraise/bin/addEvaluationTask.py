@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import optparse
+import argparse
 import os
 import sys
 
@@ -12,79 +12,85 @@ from django.contrib.auth.models import User
 taskTypes = {"qualitychecking":"1",
              "ranking":"2",
              "select-and-post-edit":"3",
-             "errorclassification":"4",
+             "error-classification":"4",
              "3-wayranking":"5",
              "post-edit-all":"6"
              
 }
+taskFactory = {"ranking":evalM.RankingTask
+               , "select-and-post-edit":evalM.SelectAndPostEditTask
+               , "error-classification":evalM.ErrorClassificationTask
+               , "post-edit-all":evalM.PostEditAllTask
+               
+}
 appraiseTaskNames = ["1", "2", "2", "3", "4", "5"]
  
+def dbNotFound(type, name):
+        argParser.error("%s \"%s\" not found in the database" % (type, name))
 
-class customHelpOptionParser(optparse.OptionParser):
-    def print_help(self):
-        optparse.OptionParser.print_help(self)
-        out = sys.stdout
-        out.write("\nFollowing task types are recognized:\n")
-        out.write("\n".join(["\t%s" % t for t in taskTypes.keys()]))
-        out.write("\nNote that the types are case-insensitive\n")
+argListSplit = lambda x : x.split(',')
 
-optionParser = customHelpOptionParser(usage="%s [options] -n <NAME> -t <TASKTYPE> -s <SYSTEMS> -l <LANGUAGE> -c <CORPUS> -u <USERS>" % os.environ["ESMT_PROG_NAME"], add_help_option=False)
-optionParser.add_option("-h", "--help", action="help", help=optparse.SUPPRESS_HELP)
-optionParser.add_option("-n", "--name", dest="name", help="unique descriptive name for this evaluation task")
-optionParser.add_option("-t", "--task-type", dest="taskType", help="type choice for this evaluation task")
-optionParser.add_option("-s", "--systems", dest="systems", help="comma separated list of systems in this evaluation task")
-optionParser.add_option("-l", "--language", dest="language", help="target language")
-optionParser.add_option("-c", "--corpus", dest="corpus", help="corpus to evaluate")
-optionParser.add_option("-u", "--users", dest="users", help="users allowed to work on the evaluation task")
-optionParser.add_option("-R", "--no-random", dest="random", help="do not use random order", action="store_false", default=True)
-optionParser.add_option("-A", "--no-active", dest="active", help="do not activate the task", action="store_false", default=True)
+argParser = argparse.ArgumentParser(prog=os.environ["ESMT_PROG_NAME"], add_help=False,
+                                    formatter_class=argparse.RawDescriptionHelpFormatter,
+                                    epilog="Following task types are recognized:\n"
+                                            + "\n".join(["\t%s" % t for t in taskTypes.keys()])
+                                            + "\nNote that the types are case-insensitive")
+argParser.add_argument("-h", "--help", action="help", help=argparse.SUPPRESS)
+argParser.add_argument("-n", "--name", dest="name", help="unique descriptive name for this evaluation task", required=True)
+argParser.add_argument("-t", "--task-type", dest="taskType", help="type choice for this evaluation task", required=True)
+argParser.add_argument("-s", "--systems", dest="systems", help="comma separated list of systems in this evaluation task", required=True, type=argListSplit)
+argParser.add_argument("-l", "--language", dest="language", help="target language", required=True)
+argParser.add_argument("-c", "--corpus", dest="corpus", help="corpus to evaluate",  required=True)
+argParser.add_argument("-u", "--users", dest="users", help="users allowed to work on the evaluation task", required=True, type=argListSplit)
+argParser.add_argument("-e", "--error-types", dest="errorTypes", help="error types to include in the task (error classification only)", type=argListSplit)
+argParser.add_argument("-R", "--no-random", dest="random", help="do not use random order", action="store_false", default=True)
+argParser.add_argument("-A", "--no-active", dest="active", help="do not activate the task", action="store_false", default=True)
 
-(options, args) = optionParser.parse_args()
+args = argParser.parse_args()
 
-if not options.name:
-    optionParser.error("You have to provide a name for the task")
-if evalM.EvaluationTask.objects.filter(task_name=options.name).exists():
-    optionParser.error("A task with name \"%s\" already exists" % options.name)
+if evalM.EvaluationTask.objects.filter(task_name=args.name).exists():
+    argParser.error("A task with name \"%s\" already exists" % args.name)
 
-if not options.taskType:
-    optionParser.error("You have to provide a type for the task")
 try:
-    optTaskType = options.taskType.lower()
+    optTaskType = args.taskType.lower()
     taskType = taskTypes[optTaskType]
+    isErrorClassification = (taskType == taskTypes["error-classification"])
 except KeyError:
-    optionParser.error("Unknown task type \"%s\"" % options.taskType)
+    argParser.error("Unknown task type \"%s\"" % args.taskType)
 
-if not options.systems:
-    optionParser.error("You have to provide systems for this evaluation task")
+if isErrorClassification:
+    if not args.errorTypes:
+        argParser.error("When adding an error classification task you have to specify the error types")
+    errorTypes = []
+    for t in args.errorTypes:
+        try:
+            errorTypes.append(evalM.ErrorClassificationType.objects.get(name=t))
+        except evalM.ErrorClassificationType.DoesNotExist:
+            dbNotFound("Error type", t)
+
 systems = []
-for s in options.systems.split(","):
+for s in args.systems:
     try:
         systems.append(corpusM.TranslationSystem.objects.get(name=s))
     except corpusM.TranslationSystem.DoesNotExist:
-        optionParser.error("System \"%s\" not found in the database" % s)
+        dbNotFound("System", s)
 
-if not options.language:
-    optionParser.error("You have to specify a target language")
 try:
-    language = corpusM.Language.objects.get(name=options.language)
+    language = corpusM.Language.objects.get(name=args.language)
 except corpusM.Language.DoesNotExist:
-    optionParser.error("Language \"%s\" does not exist" % options.language)
+    dbNotFound("Language", args.language)
 
-if not options.users:
-    optionParser.error("You have to specify users for this evaluation task")
-for u in options.users.split(","):
-    users=[]
+users=[]
+for u in args.users:
     try:
         users.append(User.objects.get(username=u))
     except User.DoesNotExist: 
-        optionParser.error("User \"%s\" not found" % u)
+        dbNotFound("User", u)
 
-if not options.corpus:
-    optionParser.error("You have to provide a corpus for this evaluation task")
 try:
-    corpus = corpusM.Corpus.objects.get(custom_id = options.corpus)
+    corpus = corpusM.Corpus.objects.get(custom_id = args.corpus)
 except corpusM.Corpus.DoesNotExist:
-    optionParser.error("Corpus \"%s\" not found in the database" % s)
+    dbNotFound("Corpus", args.corpus)
 
 # Check if we have translation for all the systems (we report all the
 # missing translations as to be more convenient for status checking
@@ -97,26 +103,28 @@ for d in corpus.documents.all():
             if not corpusM.TranslatedDocument.objects.filter(source=document, translation_system=s, language=language).exists():
                 missingTranslations.append((document, s))
 if missingTranslations:
-    optionParser.error("Missing translations for following documents and systems:\n%s" %
+    argParser.error("Missing translations for following documents and systems:\n%s" %
                        "\n".join(["\t%s\t%s" % (d.custom_id, s.name) for (d,s) in missingTranslations]))
 
 
 # All tests done :)
-task = evalM.EvaluationTask(
-            task_name = options.name
+task = taskFactory[args.taskType](
+            task_name = args.name
           , task_type = taskType
           , corpus = corpus
           , targetLanguage = language
-          , active = options.active
-          , random_order = options.random
+          , active = args.active
+          , random_order = args.random
        )
 task.save()
 for s in systems:
     task.systems.add(s)
 for u in users:
     task.users.add(u)
+if isErrorClassification:
+    task.errorTypes = errorTypes
 task.save()
 task.generateItems()
 
 nItems = evalM.EvaluationItem.objects.filter(task=task).count()
-print "Task \"%s\" (type: %s) generated with %d items" % (task.task_name, options.taskType, nItems)
+print "Task \"%s\" (type: %s) generated with %d items" % (task.task_name, args.taskType, nItems)

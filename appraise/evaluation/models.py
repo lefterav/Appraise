@@ -137,25 +137,10 @@ class EvaluationTask(models.Model):
         
         return new_id
     
+    # Function to be implemented by the subclasses
     def generateItems(self, *args, **kwargs):
-        documents = self.corpus.documents.all()
-        for d in documents:
-            sentences = corpusM.SourceSentence.objects.filter(document=d)
-            if self.task_type == '6': # post-edit-all
-                for system in self.systems.all():
-                    for s in sentences:
-                        i = EvaluationItem(task=self, source_sentence=s)
-                        i.save()
-                        i.systems.add(system)
-                        i.save()
-            else:
-                for s in sentences:
-                    i = EvaluationItem(task=self, source_sentence=s)
-                    i.save()
-                    for system in self.systems.all():
-                        i.systems.add(system)
-                    i.save()
-    
+        pass
+   
     def get_absolute_url(self):
         """
         Returns the URL for this EvaluationTask object instance.
@@ -188,21 +173,6 @@ class EvaluationTask(models.Model):
         _task_type = self.get_task_type_display()
         _header = ['Overall completion', 'Average duration']
         
-        if _task_type == 'Quality Checking':
-            pass
-        
-        elif _task_type == 'Ranking':
-            pass
-        
-        elif _task_type == 'Post-editing':
-            pass
-        
-        elif _task_type == 'Error classification':
-            pass
-        
-        elif _task_type == '3-Way Ranking':
-            pass
-        
         return _header
     
     def get_status_for_user(self, user=None):
@@ -228,22 +198,6 @@ class EvaluationTask(models.Model):
         _average_duration = reduce(lambda x, y: (x+y)/2.0, _durations, 0)
         
         _status.append('{:.2f} sec'.format(_average_duration))
-        
-        # We could add task type specific status information here.
-        if _task_type == 'Quality Checking':
-            pass
-        
-        elif _task_type == 'Ranking':
-            pass
-        
-        elif _task_type == 'Post-editing':
-            pass
-        
-        elif _task_type == 'Error classification':
-            pass
-        
-        elif _task_type == '3-Way Ranking':
-            pass
         
         return _status
     
@@ -289,6 +243,61 @@ class EvaluationTask(models.Model):
           'results': results}
         return template.render(Context(context))
 
+class RankingTask(EvaluationTask):
+    def generateItems(self, *args, **kwargs):
+        documents = self.corpus.documents.all()
+        for d in documents:
+            sentences = corpusM.SourceSentence.objects.filter(document=d)
+            for s in sentences:
+                i = EvaluationItem(task=self, source_sentence=s)
+                i.save()
+                for system in self.systems.all():
+                    i.systems.add(system)
+                i.save()
+
+class SelectAndPostEditTask(EvaluationTask):
+    def generateItems(self, *args, **kwargs):
+        documents = self.corpus.documents.all()
+        for d in documents:
+            sentences = corpusM.SourceSentence.objects.filter(document=d)
+            for s in sentences:
+                i = EvaluationItem(task=self, source_sentence=s)
+                i.save()
+                for system in self.systems.all():
+                    i.systems.add(system)
+                i.save()
+
+class PostEditAllTask(EvaluationTask):
+    def generateItems(self, *args, **kwargs):
+        documents = self.corpus.documents.all()
+        for d in documents:
+            sentences = corpusM.SourceSentence.objects.filter(document=d)
+            for system in self.systems.all():
+                for s in sentences:
+                    i = EvaluationItem(task=self, source_sentence=s)
+                    i.save()
+                    i.systems.add(system)
+                    i.save()
+
+class ErrorClassificationType(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __unicode__(self):
+        return self.name
+
+class ErrorClassificationTask(EvaluationTask):
+    errorTypes = models.ManyToManyField(ErrorClassificationType)
+    
+    def generateItems(self, *args, **kwargs):
+        documents = self.corpus.documents.all()
+        for d in documents:
+            sentences = corpusM.SourceSentence.objects.filter(document=d)
+            for system in self.systems.all():
+                for s in sentences:
+                    i = EvaluationItem(task=self, source_sentence=s)
+                    i.save()
+                    i.systems.add(system)
+                    i.save()
 
 class EvaluationItem(models.Model):
     """
@@ -412,9 +421,6 @@ class SelectAndPostEditResult(NewEvaluationResult):
 class ErrorClassificationResult(NewEvaluationResult):
     tooManyErrors = models.BooleanField()
     missingWords = models.BooleanField()
-
-class ErrorClassificationType(models.Model):
-    name = models.CharField(max_length=100)
 
 class _ErrorClassificationEntry(models.Model):
     type = models.ForeignKey(ErrorClassificationType)

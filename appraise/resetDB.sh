@@ -19,3 +19,8 @@ python2 manage.py syncdb
 ./esmt add task -t ranking -c corpus1 -s jane,moses,lucy -n fromCmdLine -u david -l DE -R
 ./esmt add task -n post-edit-all -t post-edit-all -s jane,moses -l DE -c corpus1 -u david
 ./esmt add task -n select-and-post-edit -t select-and-post-edit -s jane,moses,lucy -l DE -c corpus1 -u david
+./esmt add errorType MissingWord
+./esmt add errorType Terminology
+./esmt add errorType LexicalChoice
+./esmt add errorType Syntax
+./esmt add task -n error-classification -t error-classification -s jane,moses,lucy -l DE -c corpus1 -u david -e MissingWord,Terminology,LexicalChoice,Syntax

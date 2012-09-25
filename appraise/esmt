@@ -67,13 +67,14 @@ function assocArray() {
 ################################################################################
 # Add* functions
 
-addFuncNames=("language" "document" "corpus" "translation" "system" "task" "EOL")
+addFuncNames=("language" "document" "corpus" "translation" "system" "task" "errorType" "EOL")
 addHelp=(
          "add a language to the database"
 	 "add a document to the database"
 	 "add a corpus to the database"
 	 "add a translation to the database"
 	 "add a system to the database"
+	 "add a new error type to the database"
 	 "add an evaluation task"
 	)
 addCommands=("addLanguage.py"
@@ -82,6 +83,7 @@ addCommands=("addLanguage.py"
 	"addTranslation.py"
 	"addSystem.py"
 	"addEvaluationTask.py"
+	"addErrorType.py"
 	)
 
 function add() {

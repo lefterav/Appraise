@@ -16,6 +16,7 @@ querySets = {
     , "translationSystems":corpusM.TranslationSystem
 
     , "tasks":evalM.EvaluationTask
+    , "errorTypes":evalM.ErrorClassificationType
 
     , "users":User
 }
