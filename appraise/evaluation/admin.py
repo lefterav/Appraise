@@ -106,7 +106,7 @@ class EvaluationTaskAdmin(admin.ModelAdmin):
     fieldsets = (
       ('Required Information', {
         'classes': ('wide',),
-        'fields': ('task_name', 'task_type', 'targetLanguage', 'systems', 'corpus')
+        'fields': ('task_name', 'task_type', 'targetLanguage', 'systems', 'corpus', 'context_length')
       }),
       ('Optional Information', {
         'classes': ('wide',),

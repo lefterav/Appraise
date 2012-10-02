@@ -80,38 +80,27 @@ def _compute_context_for_item(item):
     source_text = [None, None, None]
     reference_text = [None, None, None]
     
-    #left_context = EvaluationItem.objects.filter(task=item.task, pk=item.id-1)
-    #right_context = EvaluationItem.objects.filter(task=item.task, pk=item.id+1)
-
+    context_length = item.task.context_length
     sourceSentenceId = item.source_sentence.id
     sourceDocument = item.source_sentence.document
-    try:
-        source_text[0] = corpusM.SourceSentence.objects.get(document=sourceDocument, id=sourceSentenceId-1).text
-    except corpusM.SourceSentence.DoesNotExist:
-        pass
+    leftContext = []
+    for i in range(1, context_length+1):
+        try:
+            leftContext.append(corpusM.SourceSentence.objects.get(document=sourceDocument, id=sourceSentenceId-i).text)
+        except corpusM.SourceSentence.DoesNotExist:
+            break
+    leftContext.reverse()
+    source_text[0] = " ".join(leftContext)
 
     source_text[1] = item.source[0]
 
-    try:
-        source_text[2] = corpusM.SourceSentence.objects.get(document=sourceDocument, id=sourceSentenceId+1).text
-    except corpusM.SourceSentence.DoesNotExist:
-        pass
-    
-    #if left_context:
-    #    _left = left_context[0]
-    #    source_text[0] = _left.source[0]
-    #    if _left.reference:
-    #        reference_text[0] = _left.reference[0]
-    
-    #source_text[1] = item.source[0]
-    #if item.reference:
-    #    reference_text[1] = item.reference[0]
-    
-    #if right_context:
-    #    _right = right_context[0]
-    #    source_text[2] = _right.source[0]
-    #    if _right.reference:
-    #        reference_text[2] = _right.reference[0]
+    rightContext = []
+    for i in range(1, context_length+1):
+        try:
+            rightContext.append(corpusM.SourceSentence.objects.get(document=sourceDocument, id=sourceSentenceId+i).text)
+        except corpusM.SourceSentence.DoesNotExist:
+            break
+    source_text[2] = " ".join(rightContext)
     
     return (source_text, reference_text)
 

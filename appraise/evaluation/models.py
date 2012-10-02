@@ -40,7 +40,7 @@ APPRAISE_TASK_TYPE_CHOICES = (
 class EvaluationTask(models.Model):
     """
     Evaluation Task object model.
-:   """
+    """
     task_id = models.CharField(
       max_length=32,
       db_index=True,
@@ -102,6 +102,11 @@ class EvaluationTask(models.Model):
       help_text="Indicates that items from this evaluation task should be " \
         "shown in random order.",
       verbose_name="Random order?"
+    )
+
+    context_length = models.IntegerField(
+        default=1,
+        help_text="Length of the context to display"
     )
 
     class Meta:
