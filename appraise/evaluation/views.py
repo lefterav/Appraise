@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import RequestContext
 
-from appraise.evaluation.models import APPRAISE_TASK_TYPE_CHOICES, \
+from evaluation.models import APPRAISE_TASK_TYPE_CHOICES, \
   EvaluationTask, EvaluationItem, EvaluationResult, NewEvaluationResult, \
   RankingResult, _RankingRank, \
   SelectAndPostEditResult, PostEditAllResult, \
@@ -24,7 +24,7 @@ import corpus.models as corpusM
 
 # Setup logging support.
 logging.basicConfig(level=LOG_LEVEL)
-LOGGER = logging.getLogger('appraise.evaluation.views')
+LOGGER = logging.getLogger('evaluation.views')
 LOGGER.addHandler(LOG_HANDLER)
 
 
@@ -149,7 +149,7 @@ def _handle_quality_checking(request, task, items):
     # Find next item the current user should process or return to overview.
     item = _find_next_item_to_process(items, request.user)
     if not item:
-        return redirect('appraise.evaluation.views.overview')
+        return redirect('evaluation.views.overview')
     
     # Compute source and reference texts including context where possible.
     source_text, reference_text = _compute_context_for_item(item)
@@ -246,7 +246,7 @@ def _handle_ranking(request, task, items):
     # Find next item the current user should process or return to overview.
     item = _find_next_item_to_process(items, request.user, task.random_order)
     if not item:
-        return redirect('appraise.evaluation.views.overview')
+        return redirect('evaluation.views.overview')
 
     # Compute source and reference texts including context where possible.
     source_text, reference_text = _compute_context_for_item(item)
@@ -346,7 +346,7 @@ def _handle_postediting(request, task, items):
     
     item = _find_next_item_to_process(items, request.user)
     if not item:
-        return redirect('appraise.evaluation.views.overview')
+        return redirect('evaluation.views.overview')
     
     source_text, reference_text = _compute_context_for_item(item)
     _finished, _total = task.get_finished_for_user(request.user)
@@ -431,7 +431,7 @@ def _handle_error_classification(request, taskIn, items):
     
     item = _find_next_item_to_process(items, request.user)
     if not item:
-        return redirect('appraise.evaluation.views.overview')
+        return redirect('evaluation.views.overview')
     
     source_text, reference_text = _compute_context_for_item(item)
     _finished, _total = task.get_finished_for_user(request.user)
@@ -504,7 +504,7 @@ def _handle_three_way_ranking(request, task, items):
     # Find next item the current user should process or return to overview.
     item = _find_next_item_to_process(items, request.user)
     if not item:
-        return redirect('appraise.evaluation.views.overview')
+        return redirect('evaluation.views.overview')
 
     # Compute source and reference texts including context where possible.
     source_text, reference_text = _compute_context_for_item(item)
@@ -567,7 +567,7 @@ def task_handler(request, task_id):
     task = get_object_or_404(EvaluationTask, task_id=task_id)
     items = EvaluationItem.objects.filter(task=task)
     if not items:
-        return redirect('appraise.evaluation.views.overview')
+        return redirect('evaluation.views.overview')
     
     _task_type = task.get_task_type_display()
     if _task_type == 'Quality Checking':

@@ -10,7 +10,7 @@ from django.http import HttpResponse
 from django.template import Context
 from django.template.loader import get_template
 
-from appraise.evaluation.models import EvaluationTask, EvaluationItem, \
+from evaluation.models import EvaluationTask, EvaluationItem, \
   EvaluationResult, NewEvaluationResult
 
 

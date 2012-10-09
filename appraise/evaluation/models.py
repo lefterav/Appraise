@@ -150,7 +150,7 @@ class EvaluationTask(models.Model):
         """
         Returns the URL for this EvaluationTask object instance.
         """
-        task_handler_view = 'appraise.evaluation.views.task_handler'
+        task_handler_view = 'evaluation.views.task_handler'
         kwargs = {'task_id': self.task_id}
         return reverse(task_handler_view, kwargs=kwargs)
     

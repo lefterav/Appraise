@@ -48,6 +48,7 @@ def login(request, template_name):
     
     extra_context = {'commit_tag': COMMIT_TAG}
     return LOGIN(request, template_name, extra_context=extra_context)
+    return LOGIN(request, template_name)
 
 
 def logout(request, next_page):

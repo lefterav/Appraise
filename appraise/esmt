@@ -4,7 +4,7 @@ progname=`basename $0`
 basedir=`dirname $0`
 bindir=${basedir}/bin
 export PYTHONPATH=$basedir/..:$PYTHONPATH
-export DJANGO_SETTINGS_MODULE=settings
+export DJANGO_SETTINGS_MODULE=appraise.settings
 
 ################################################################################
 # Utility functions

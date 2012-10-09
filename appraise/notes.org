@@ -1,6 +1,0 @@
-- Removed campaigns
-- TranslationSystem: supported_language_directions?
-- System in Translation? (i.e. per sentence)
-- Status?
-- Post-editing + error-analysis --> single systems?
-- Creating eval tasks on the web interface doesn't work any more (call to generateItems needed!)

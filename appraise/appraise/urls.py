@@ -24,10 +24,10 @@ urlpatterns = patterns('',
 
   (r'^appraise/admin/', include(admin.site.urls)),
 
-  (r'^appraise/evaluation/$', 'appraise.evaluation.views.overview'),
+  (r'^appraise/evaluation/$', 'evaluation.views.overview'),
 
   (r'^appraise/evaluation/(?P<task_id>[a-f0-9]{32})/',
-    'appraise.evaluation.views.task_handler'),
+    'evaluation.views.task_handler'),
 )
 
 if DEBUG:
