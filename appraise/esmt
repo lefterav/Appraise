@@ -164,6 +164,12 @@ function dump_help() {
 }
 
 ################################################################################
+# Runs an external command within the esmt environment
+function run() {
+    eval $*
+}
+
+################################################################################
 # Start the server
 function start() {
     python2 $basedir/manage.py runserver
@@ -191,13 +197,14 @@ EOF
     fi
 }
 
-supportedCommands=("add" "list" "dump" "start" "help" "EOL")
+supportedCommands=("add" "list" "dump" "start" "help" "run" "EOL")
 helpForCommands=(
                  "adds elements to the database"
 		 "lists elements in the database"
 		 "dumps elements from the database"
 		 "starts the evaluation server"
 		 "shows this help"
+		 "runs an external command with the esmt environment"
 		)
 
 ################################################################################
