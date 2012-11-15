@@ -25,7 +25,8 @@ baseQueryObjects = {
 }
 
 def formatRankingResult(r, fields):
-    for rank in r.results.all():
+    ranks = evalM._RankingRank.objects.filter(result=r)
+    for rank in ranks:
         system = corpusM.TranslatedDocument.objects.get(id=rank.translation.document.id).translation_system
         fields.append(":".join([system.name, str(rank.rank)]))
 
@@ -107,7 +108,10 @@ for r in results:
     
     fields.append(sourceSentence.custom_id)
     
-    fields.append(r.user.username)
+    if r.user:
+        fields.append(r.user.username)
+    else:
+        fields.append("None")
     
     fields.append('{}'.format(r.duration))
     

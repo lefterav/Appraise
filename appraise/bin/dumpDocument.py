@@ -16,7 +16,7 @@ if len(args) != 1:
 
 out = sys.stdout
 
-candidates = models.SourceDocument.objects.filter(customId=args[0])
+candidates = models.SourceDocument.objects.filter(custom_id=args[0])
 if not candidates:
     sys.stderr.write("Error: Document does not exist\n")
     sys.exit(1)

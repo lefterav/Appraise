@@ -83,11 +83,11 @@ class EvaluationTask(models.Model):
       help_text="(Optional) Users allowed to work on this evaluation task."
     )
 
-    corpus = models.ForeignKey(corpusM.Corpus)
+    corpus = models.ForeignKey(corpusM.Corpus,null=True)
     
     systems = models.ManyToManyField(corpusM.TranslationSystem)
 
-    targetLanguage = models.ForeignKey(corpusM.Language)
+    targetLanguage = models.ForeignKey(corpusM.Language,null=True)
 
     active = models.BooleanField(
       db_index=True,
@@ -381,8 +381,8 @@ class NewEvaluationResult(models.Model):
     """
     Evaluation Result object model.
     """
-    item = models.ForeignKey(EvaluationItem, db_index=True)
-    user = models.ForeignKey(User, db_index=True)
+    item = models.ForeignKey(EvaluationItem, db_index=True, null=True)
+    user = models.ForeignKey(User, db_index=True, null=True)
     duration = models.TimeField(blank=True, null=True, editable=False)
     skipped = models.BooleanField()
 
@@ -406,13 +406,14 @@ class NewEvaluationResult(models.Model):
         """
         return u'<evaluation-result id="{0}">'.format(self.id)
 
+class RankingResult(NewEvaluationResult):
+    pass
+
 class _RankingRank(models.Model):
     translation = models.ForeignKey(corpusM.Translation)
     rank = models.IntegerField()
+    result = models.ForeignKey(RankingResult)
     
-class RankingResult(NewEvaluationResult):
-    results = models.ManyToManyField(_RankingRank)
-
 class PostEditAllResult(NewEvaluationResult):
     sentence = models.TextField(null=True)
     fromScratch = models.BooleanField()

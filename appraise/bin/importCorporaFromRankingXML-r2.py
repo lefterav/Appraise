@@ -50,9 +50,11 @@ class TranslationSystemInfo:
 
 argumentParser = argparse.ArgumentParser()
 argumentParser.add_argument("file", help="file to read the data from", type=argparse.FileType())
+argumentParser.add_argument("-e", "--error-on-duplicates", dest="errorOnDuplicates", default=False, action="store_true", help="Abort with an error on duplicate entities (corpora, translations, etc.)")
 args = argumentParser.parse_args()
 
 log = lambda x : sys.stdout.write("%s\n" % x)
+warning = lambda x : sys.stderr.write("Warning: %s\n" % x)
 
 tree = ET.parse(args.file)
 root = tree.getroot()
@@ -66,15 +68,27 @@ targetLanguage = dbGetLanguage(targetLanguageId)
 log("Source language: %s" % sourceLanguage.english_name)
 log("Target language: %s" % targetLanguage.english_name)
 
-if models.SourceDocument.objects.filter(custom_id=corpusName, language=sourceLanguage).exists():
-    argumentParser.error("Document \"%s\" (%s) already exists in the database!\n"
-                     % (corpusName, sourceLanguage.english_name))
-if models.Corpus.objects.filter(custom_id=corpusName, language=sourceLanguage).exists():
-    argumentParser.error("Document \"%s\" (%s) already exists in the database!\n"
-                     % (corpusName, sourceLanguage.english_name))
+try:
+    document = models.SourceDocument.objects.get(custom_id=corpusName,
+                                                 language=sourceLanguage)
+    documentAlreadyExists = True
+    if args.errorOnDuplicates:
+        argumentParser.error("Document \"%s\" (%s) already exists in the database, aborting\n"
+                         % (corpusName, sourceLanguage.english_name))
+    else:
+        warning("Document \"%s\" (%s) already exists in the database, sentence ordering may become corrupt\n" % (corpusName, sourceLanguage.english_name))
+except models.SourceDocument.DoesNotExist:
+    documentAlreadyExists = False
+    document = models.SourceDocument(custom_id=corpusName, language=sourceLanguage)
+    document.save()
 
-document = models.SourceDocument(custom_id=corpusName, language=sourceLanguage)
-document.save()
+try:
+    corpus = models.Corpus.objects.get(custom_id=corpusName, language=sourceLanguage)
+    if args.errorOnDuplicates:
+        argumentParser.error("Corpus \"%s\" (%s) already exists in the database, aborting\n"
+                             % (corpusName, sourceLanguage.english_name))
+except models.Corpus.DoesNotExist:
+    corpus = None
 
 sentenceCount = 0
 systemInfoInventary = TranslationSystemInfo(document, targetLanguage)
@@ -82,28 +96,42 @@ for c in root.iter():
     if c.tag == "seg":
         sentenceId = c.get("id")
     elif c.tag == "source":
-        sentence = models.SourceSentence(text=c.text.strip())
-        sentence.document = document
-        sentence.custom_id = sentenceId
-        sentence.save()
+        try:
+            sentence = models.SourceSentence.objects.get(custom_id=sentenceId,
+                                                         document=document)
+            if sentence:
+                if args.errorOnDuplicates:
+                    argumentParser.error("Sentence %s already exists in the database" % sentenceId)
+        except models.SourceSentence.DoesNotExist:
+            sentence = models.SourceSentence(text=c.text.strip())
+            sentence.document = document
+            sentence.custom_id = sentenceId
+            sentence.save()
         sentenceCount += 1
         sys.stdout.write("\r%d sentences" % sentenceCount)
         sys.stdout.flush()
     elif c.tag == "translation":
         systemId = c.get("system")
         systemInfo = systemInfoInventary[systemId]
-        translation = models.Translation(source_sentence=sentence,
-                                         text=c.text.strip(),
-                                         document=systemInfo.document)
-        translation.save()
+        if models.Translation.objects.filter(source_sentence=sentence,
+                                             document=systemInfo.document).exists():
+            if args.errorOnDuplicates:
+                argumentParser.error("Translation of sentence %s by system %s already exists in the database" % (sentenceId, systemId))
+        else:
+            translation = models.Translation(source_sentence=sentence,
+                                             text=c.text.strip(),
+                                             document=systemInfo.document)
+            translation.save()
         
 sys.stdout.write("\r") # Clear the sentence counter
 document.save()
 log("Document %s created with %d sentences" % (corpusName, sentenceCount))
 
-corpus = models.Corpus(custom_id=corpusName, language=sourceLanguage)
-corpus.save()
-c2d = models.Document2Corpus(document=document, corpus=corpus, order=0)
-c2d.save()
-log("Corpus %s created" % corpusName)
-log("Translations found for: %s" % " ".join(systemInfoInventary.getSystemIds()))
+if not corpus:
+    corpus = models.Corpus(custom_id=corpusName, language=sourceLanguage)
+    corpus.save()
+if not documentAlreadyExists:
+    c2d = models.Document2Corpus(document=document, corpus=corpus, order=0)
+    c2d.save()
+    log("Corpus %s created" % corpusName)
+log("Translations added for: %s" % " ".join(systemInfoInventary.getSystemIds()))

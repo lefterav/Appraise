@@ -1,4 +1,6 @@
 #!/bin/bash
+addCorpora=${1:-true}
+
 python2 manage.py reset corpus --noinput
 python2 manage.py reset evaluation --noinput
 python2 manage.py syncdb
@@ -11,9 +13,11 @@ python2 manage.py syncdb
 ./esmt add language -i cs -l Czech -n Český
 
 # Import source data and translations
-for i in \
-    /home/david/penguin/share/taraxu/evaluation-rounds/r2/xmlAppraise/uploaded/wmt11-cs_en-wmt11-ranking.beo.xml \
-    ; do
-        echo "Adding $i"
-	./esmt run bin/importCorporaFromRankingXML-r2.py $i
-done
+if $addCorpora; then
+    for i in \
+        /home/david/penguin/share/taraxu/evaluation-rounds/r2/xmlAppraise/uploaded/*ranking*.xml \
+        ; do
+            echo "Adding $i"
+            ./esmt run bin/importCorporaFromRankingXML-r2.py $i
+    done
+fi

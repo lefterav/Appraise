@@ -237,9 +237,8 @@ def _handle_ranking(request, task, items):
 
             systems = current_item.task.systems.all()
             for (n, t) in enumerate(current_item.translations):
-                rank = _RankingRank(translation=t, rank=ranks[n])
+                rank = _RankingRank(translation=t, rank=ranks[n], result=result)
                 rank.save()
-                result.results.add(rank)
 
         result.save()
     
