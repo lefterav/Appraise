@@ -78,7 +78,7 @@ addHelp=(
 	 "add an evaluation task"
 	)
 addCommands=("addLanguage.py"
-	"addSourceDocument.py"
+	"addSourceDocumentIds.py"
 	"addCorpus.py"
 	"addTranslation.py"
 	"addSystem.py"
