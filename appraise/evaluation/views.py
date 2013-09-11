@@ -69,7 +69,10 @@ def _find_next_item_to_process(items, user, random_order=False):
     #
     #if unprocessed_items:
     #    return unprocessed_items[0]
+<<<<<<< HEAD
 
+=======
+>>>>>>> 106dd1f188549aef75337cbaa31c36449b3a54ad
     unprocessed_items = items.exclude(pk__in=processed_items)
     if unprocessed_items:
         return unprocessed_items[0]
