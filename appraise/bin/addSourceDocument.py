@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+import codecs
 import optparse
 import os.path
 import sys
@@ -12,6 +13,7 @@ optionParser.add_option("-l", "--language", dest="language", help="source langua
 optionParser.add_option("-i", "--id", dest="id", help="id of the document (if not given, the filename will be taken)",
                   metavar="ID")
 optionParser.add_option("-u", "--unique-sentence-id", help="create a (hopefully) unique sentence id for each sentence in the corpus", dest="uniqueSentenceId", action="store_true")
+optionParser.add_option("-f", "--idsfile", help="File that contains the sentence custom IDs per line")
 optionParser.add_option("-C", "--no-corpus", dest="noCorpus", help="do not create a corpus for this document", action="store_true")
 (options, args) = optionParser.parse_args()
 
@@ -37,12 +39,16 @@ if models.SourceDocument.objects.filter(custom_id=options.id, language=language)
                      % (options.id, language.english_name))
     sys.exit(1)
 
-fp = open(args[0])
+fp = codecs.open(args[0], encoding="utf8")
 
 # Document creation
 log.write("Importing corpus \"%s\" from %s (language: %s)...\n" % (options.id, args[0], language.english_name))
 d = models.SourceDocument(custom_id=options.id, language=language)
 d.save()
+
+if options.idsfile:
+    idsfile = open(options.idsfile)
+    
 
 # Adding the sentences
 for (n, l) in enumerate(fp):
@@ -51,10 +57,17 @@ for (n, l) in enumerate(fp):
     s.document = d
     if not options.uniqueSentenceId:
         s.custom_id = "%d" % (n+1)
+    elif options.idsfile:
+        s.custom_id = idsfile.next().strip()
     else:
         s.custom_id = "%s__%d" % (d.custom_id, (n+1))
     s.save()
 d.save()
+
+if options.idsfile:
+    idsfile.close()
+fp.close()
+
 log.write("Document \"%s\" stored in database with %d sentences.\n" % (d.custom_id, len(d.sentence_set.all())))
 
 # Corpus creation

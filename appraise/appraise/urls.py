@@ -14,24 +14,24 @@ from appraise.settings import MEDIA_ROOT, DEBUG
 admin.autodiscover()
 
 urlpatterns = patterns('',
-  (r'^appraise/$', 'appraise.views.frontpage'),
+  (r'^/?appraise/$', 'appraise.views.frontpage'),
 
-  (r'^appraise/login/$', 'appraise.views.login',
+  (r'^/?appraise/login/$', 'appraise.views.login',
     {'template_name': 'login.html'}),
 
-  (r'^appraise/logout/$', 'appraise.views.logout',
+  (r'^/?appraise/logout/$', 'appraise.views.logout',
     {'next_page': '/appraise/'}),
 
-  (r'^appraise/admin/', include(admin.site.urls)),
+  (r'^/?appraise/admin/', include(admin.site.urls)),
 
-  (r'^appraise/evaluation/$', 'evaluation.views.overview'),
+  (r'^/?appraise/evaluation/$', 'evaluation.views.overview'),
 
-  (r'^appraise/evaluation/(?P<task_id>[a-f0-9]{32})/',
+  (r'^/?appraise/evaluation/(?P<task_id>[a-f0-9]{32})/',
     'evaluation.views.task_handler'),
 )
 
 if DEBUG:
     urlpatterns += patterns('',
-      (r'^appraise/site_media/(?P<path>.*)$', 'django.views.static.serve',
+      (r'^/?appraise/site_media/(?P<path>.*)$', 'django.views.static.serve',
         {'document_root': MEDIA_ROOT}),
     )
