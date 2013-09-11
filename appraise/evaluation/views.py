@@ -62,15 +62,19 @@ def _find_next_item_to_process(items, user, random_order=False):
     processed_items = user_results.values_list('item__pk', flat=True)
     
     # cfedermann: this might be sub optimal wrt. performance!
-    unprocessed_items = list(items.exclude(pk__in=processed_items))
-    
-    if random_order:
-        shuffle(unprocessed_items)
-    
+    #unprocessed_items = list(items.exclude(pk__in=processed_items))
+    #
+    #if random_order:
+    #    shuffle(unprocessed_items)
+    #
+    #if unprocessed_items:
+    #    return unprocessed_items[0]
+
+    unprocessed_items = items.exclude(pk__in=processed_items)
     if unprocessed_items:
         return unprocessed_items[0]
-    
-    return None
+    else: 
+        return None
 
 
 def _compute_context_for_item(item):
@@ -323,7 +327,7 @@ def _handle_postediting(request, task, items):
         if submit_button == 'SUBMIT':
             if from_scratch:
                 result.fromScratch = True
-            result.sentence = postedited
+            result.sentence = postedited.encode("utf-8")
             translation = current_item.translations[int(edit_id)]
             translatedDocument = corpusM.TranslatedDocument.objects.get(id=translation.document.id)
             result.system = translatedDocument.translation_system
@@ -336,7 +340,7 @@ def _handle_postediting(request, task, items):
             _results.append(edit_id)
             _results.append(postedited)
             _raw_result = '\n'.join(_results)
-            print _raw_result
+            print _raw_result.encode("utf-8")
         
         elif submit_button == 'FLAG_ERROR':
             result.skipped = True

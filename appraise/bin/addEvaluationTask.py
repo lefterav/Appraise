@@ -115,6 +115,7 @@ task = taskFactory[args.taskType](
           , targetLanguage = language
           , active = args.active
           , random_order = args.random
+	  , context_length = 0
        )
 task.save()
 for s in systems:

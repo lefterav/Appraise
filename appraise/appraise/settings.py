@@ -1,7 +1,12 @@
 # Django settings for appraise project.
 
 import os
-ROOT_PATH = os.getcwd()
+#the path that points to the githubed code
+BASE_PATH = '/local/qt21/data/evaluation_interface/Appraise'
+ROOT_PATH = '{0}/appraise'.format(BASE_PATH)
+#ROOT_PATH = os.getcwd()
+
+USE_X_FORWARDED_HOST = True
 
 from subprocess import check_output
 try:
@@ -24,12 +29,13 @@ MANAGERS = ADMINS
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
-        'NAME': '{0}/development.db'.format(ROOT_PATH),   # Or path to database file if using sqlite3.
-        'USER': '',                      # Not used with sqlite3.
-        'PASSWORD': '',                  # Not used with sqlite3.
+        'ENGINE': 'django.db.backends.mysql', # Add 'postgresql_psycopg2', 'mysql', 'sqlite3' or 'oracle'.
+        'NAME': 'appraise_taraxu_r2',   # Or path to database file if using sqlite3.
+        'USER': 'appraise',                      # Not used with sqlite3.
+        'PASSWORD': '+4r4xu3!',                  # Not used with sqlite3.
         'HOST': '',                      # Set to empty string for localhost. Not used with sqlite3.
         'PORT': '',                      # Set to empty string for default. Not used with sqlite3.
+	'OPTIONS': {'init_command' : 'SET storage_engine=INNODB,character_set_connection=utf8,collation_connection=utf8_unicode_ci'},
     }
 }
 
@@ -69,11 +75,11 @@ MEDIA_URL = ''
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = ''
+STATIC_ROOT = '{0}/static/'.format(ROOT_PATH)
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
-STATIC_URL = '/static/'
+STATIC_URL = '/appraise/site_media/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
@@ -105,7 +111,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     #'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    #'django.contrib.messages.middleware.MessageMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
     # Uncomment the next line for simple clickjacking protection:
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -172,7 +178,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 LOG_LEVEL = logging.INFO
-LOG_FILENAME = '/tmp/appraise.log'
+LOG_FILENAME = '{0}/logs/appraise.log'.format(BASE_PATH)
 LOG_FORMAT = "[%(asctime)s] %(name)s::%(levelname)s %(message)s"
 LOG_DATE = "%m/%d/%Y @ %H:%M:%S"
 LOG_FORMATTER = logging.Formatter(LOG_FORMAT, LOG_DATE)

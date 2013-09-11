@@ -1,5 +1,6 @@
 #!/usr/bin/env python2
 
+import codecs
 import optparse
 import os.path
 import sys
@@ -37,7 +38,7 @@ if models.SourceDocument.objects.filter(custom_id=options.id, language=language)
                      % (options.id, language.english_name))
     sys.exit(1)
 
-fp = open(args[0])
+fp = codecs.open(args[0], encoding="utf8")
 
 # Document creation
 log.write("Importing corpus \"%s\" from %s (language: %s)...\n" % (options.id, args[0], language.english_name))
