@@ -21,6 +21,7 @@ taskFactory = {"ranking":evalM.RankingTask
                , "select-and-post-edit":evalM.SelectAndPostEditTask
                , "error-classification":evalM.ErrorClassificationTask
                , "post-edit-all":evalM.PostEditAllTask
+               , "qualitychecking":evalM.QualityTask
                
 }
 appraiseTaskNames = ["1", "2", "2", "3", "4", "5"]

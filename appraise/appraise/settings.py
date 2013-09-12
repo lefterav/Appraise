@@ -139,11 +139,6 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-<<<<<<< HEAD
-    'django.contrib.messages',
-=======
-    'django_extensions',
->>>>>>> f10a0df472aca5c818f5b46c1cae27b4d7e61868
     'corpus',
     'evaluation',
     'selection'
