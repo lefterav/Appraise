@@ -339,7 +339,7 @@ def _handle_postediting(request, task, items):
             _results.append(edit_id)
             _results.append(postedited)
             _raw_result = '\n'.join(_results)
-            print _raw_result
+            #print _raw_result
         
         elif submit_button == 'FLAG_ERROR':
             result.skipped = True

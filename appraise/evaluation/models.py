@@ -421,7 +421,6 @@ class NewEvaluationResult(models.Model):
 class QualityResult(NewEvaluationResult):
     score = models.IntegerField()
     system = models.ForeignKey(corpusM.TranslationSystem, null=True)
-    skipped = models.BooleanField()
 
 class RankingResult(NewEvaluationResult):
     pass
