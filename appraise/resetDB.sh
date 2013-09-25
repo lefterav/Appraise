@@ -7,7 +7,7 @@ python2 manage.py syncdb
 ./esmt add language -i DE -l German -n Deutsch
 ./esmt add document test/source-ES -l ES --idfile test/source.ids
 ./esmt add document test/source-DE -l DE --idfile test/source.ids
-./esmt add corpus -i corpus1 -l ES source-ES source-ES-2 
+./esmt add corpus -i corpus1 -l ES source-ES  
 ./esmt add system jane
 ./esmt add system moses
 ./esmt add system lucy

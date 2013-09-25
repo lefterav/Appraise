@@ -289,12 +289,12 @@ class QualityTask(EvaluationTask):
         documents = self.corpus.documents.all()
         for d in documents:
             sentences = corpusM.SourceSentence.objects.filter(document=d)
-            for s in sentences:
-                i = EvaluationItem(task=self, source_sentence=s)
-                i.save()
-                for system in self.systems.all():
+            for system in self.systems.all():
+                for s in sentences:
+                    i = EvaluationItem(task=self, source_sentence=s)
+                    i.save()
                     i.systems.add(system)
-                i.save()
+                    i.save()
 
 class ErrorClassificationType(models.Model):
     name = models.CharField(max_length=100, unique=True)

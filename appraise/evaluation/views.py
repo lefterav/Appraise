@@ -17,7 +17,8 @@ from evaluation.models import APPRAISE_TASK_TYPE_CHOICES, \
   EvaluationTask, EvaluationItem, EvaluationResult, NewEvaluationResult, \
   RankingResult, _RankingRank, \
   SelectAndPostEditResult, PostEditAllResult, \
-  ErrorClassificationResult, _ErrorClassificationEntry, ErrorClassificationType
+  ErrorClassificationResult, _ErrorClassificationEntry, ErrorClassificationType, \
+  QualityResult
 from appraise.settings import LOG_LEVEL, LOG_HANDLER, COMMIT_TAG
 
 import corpus.models as corpusM
@@ -108,8 +109,11 @@ def _compute_context_for_item(item):
     return (source_text, reference_text)
 
 
+
+
+
 @login_required
-def _handle_quality_checking(request, task, items):
+def _handle_quality_checking2(request, task, items):
     """
     Handler for Quality Checking tasks.
     
@@ -177,6 +181,89 @@ def _handle_quality_checking(request, task, items):
     }
     
     return render(request, 'evaluation/quality_checking.html', dictionary)
+
+
+@login_required
+def _handle_quality_checking(request, task, items):
+    if request.method == "POST":
+        item_id = request.POST.get('item_id')
+        edit_id = request.POST.get('edit_id', 0)
+        end_timestamp = request.POST.get('end_timestamp', None)
+        submit_button = request.POST.get('submit_button')
+        start_timestamp = request.POST.get('start_timestamp', None)
+        
+        current_item = get_object_or_404(EvaluationItem, pk=int(item_id))
+        
+        # Compute duration for this item.
+        duration = None
+        if end_timestamp and start_timestamp:
+            start_datetime = datetime.fromtimestamp(float(start_timestamp))
+            end_datetime = datetime.fromtimestamp(float(end_timestamp))
+            duration = end_datetime - start_datetime
+        
+        print
+        print "item_id: {0}".format(item_id)
+        print "edit_id: {0}".format(edit_id)
+        print "submit_button: {0}".format(submit_button)        
+        print
+        print request.POST
+        print
+        
+#         if current_item.task.task_type == "6":
+#             result = QualityResult(item=current_item, user=request.user, duration=duration)
+#         else:
+        result = QualityResult(item=current_item, user=request.user, duration=duration)
+#         if submit_button == 'SUBMIT':
+#             if from_scratch:
+#                 result.fromScratch = True
+#             result.sentence = postedited.encode("utf-8")
+#             translation = current_item.translations[int(edit_id)]
+#             translatedDocument = corpusM.TranslatedDocument.objects.get(id=translation.document.id)
+#             result.system = translatedDocument.translation_system
+#             # Could we get here the system from the systems? Probably not...
+#             
+#             _results = []
+#             if from_scratch:
+#                 _results.append('FROM_SCRATCH')
+#             
+#             _results.append(edit_id)
+#             _results.append(postedited)
+#             _raw_result = '\n'.join(_results)
+#             #print _raw_result
+        
+        if submit_button == 'FLAG_ERROR':
+            result.skipped = True
+            result.score = -1
+        
+        else:
+            result.score = int(submit_button)
+            
+        
+        result.save()
+    
+    item = _find_next_item_to_process(items, request.user)
+    if not item:
+        return redirect('evaluation.views.overview')
+    
+    print "****Translations: ", item.translations[0].text
+    source_text, reference_text = _compute_context_for_item(item)
+    _finished, _total = task.get_finished_for_user(request.user)
+    
+    dictionary = { 
+      'item_id': item.id,
+      'source_text': source_text, 
+      'reference_text': reference_text,
+      'translation': [t.text for t in item.translations],
+      'description': task.description,
+      'task_progress': '{0:03d}/{1:03d}'.format(_finished+1, _total),
+      'action_url': request.path, 
+      'commit_tag': COMMIT_TAG,
+      'title': 'Translation Quality Checking'
+      }
+    
+    return render(request, 'evaluation/quality_checking.html', dictionary)
+
+
 
 
 @login_required
