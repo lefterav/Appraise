@@ -1,6 +1,34 @@
 {% extends "base.html" %}
 
+{% block head %}
+
+<script src="/appraise/site_media/jquery-1.7.1.min.js"></script>
+<script>
+
+$(document).ready(function() {
+  $('input[name="start_timestamp"]').val(Date.now()/1000.0);
+});
+
+function add_end_timestamp()
+{
+  $('input[name="end_timestamp"]').val(Date.now()/1000.0);
+}
+
+
+function reset_form()
+{
+  $('input[name="start_timestamp"]').val(Date.now()/1000.0);
+}
+
+</script>
+{% endblock %}
+
+
+
 {% block content %}
+
+
+
 
 <div class="alert alert-info">
   <strong id="task_progress">{{task_progress}}</strong>
@@ -39,8 +67,10 @@
 {% endif %}
 </div>
 
-<form action="{{action_url}}" method="post">
+<form action="{{action_url}}" method="post"  onsubmit="javascript:add_end_timestamp();">
 
+<input name="start_timestamp" type="hidden" value="" />
+<input name="end_timestamp" type="hidden" value="" />
 <input name="item_id" type="hidden" value="{{item_id}}" />
 <input name="now" type="hidden" value="{{now}}" />
 
