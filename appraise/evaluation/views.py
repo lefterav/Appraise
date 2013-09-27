@@ -54,7 +54,7 @@ def _save_results(item, user, duration, raw_result):
     _result.save()
 
 
-def _find_next_item_to_process(items, user, random_order=False):
+def _find_next_item_to_process(items, user, random_order=False, order_by=None):
     """
     Computes the next item the current user should process or None, if done.
     """
@@ -71,6 +71,12 @@ def _find_next_item_to_process(items, user, random_order=False):
     #if unprocessed_items:
     #    return unprocessed_items[0]
     unprocessed_items = items.exclude(pk__in=processed_items)
+
+    #for some tasks, we may have to order based on the id of the source_sentence 
+    #(this should reflect the order source sentences were put in the database)
+    if order_by == "sentence__id":
+        unprocessed_items = unprocessed_items.order_by('source_sentence')
+
     if unprocessed_items:
         return unprocessed_items[0]
     else: 
@@ -241,11 +247,10 @@ def _handle_quality_checking(request, task, items):
         
         result.save()
     
-    item = _find_next_item_to_process(items, request.user)
+    item = _find_next_item_to_process(items, request.user, False, "sentence__id")
     if not item:
         return redirect('evaluation.views.overview')
     
-    print "****Translations: ", item.translations[0].text
     source_text, reference_text = _compute_context_for_item(item)
     _finished, _total = task.get_finished_for_user(request.user)
     
