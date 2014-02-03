@@ -351,9 +351,11 @@ class EvaluationItem(models.Model):
         Makes sure that self.translations are available.
         """
         super(EvaluationItem, self).__init__(*args, **kwargs)
-        
-        self.reload_dynamic_fields()
-    
+        try:
+           self.reload_dynamic_fields()
+        except:
+           pass
+
     def __unicode__(self):
         """
         Returns a Unicode String for this EvaluationItem object.
