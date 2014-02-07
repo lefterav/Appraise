@@ -4,6 +4,7 @@ Created on Feb 7, 2014
 @author: Eleftherios Avramidis
 '''
 
+import sys
 from io_utils.sax.cejcml import CEJcmlReader
 from corpus.models import SourceSentence, Feature, FeatureValue, Translation
 
@@ -68,4 +69,6 @@ class FeaturesImporter:
                 FeatureValue.objects.bulk_create(featurevalues)
 
 if __name__ == '__main__':
-    pass
+    importer = FeaturesImporter()
+    bulk = (sys.argv[2] == "--bulk")    
+    importer.import_features_from_file(sys.argv[1], bulk)
